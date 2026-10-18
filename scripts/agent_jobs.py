@@ -295,7 +295,14 @@ class AgentJobReporter:
 
 # ---------------------------------------------------------------- read helpers
 
+def _safe_job_id(job_id):
+    text = str(job_id)
+    return bool(text) and "/" not in text and "\\" not in text and ".." not in text and not text.startswith(".")
+
+
 def read_job(job_id):
+    if not _safe_job_id(job_id):
+        return None
     path = jobs_state_root() / str(job_id) / "job.json"
     if not path.is_file():
         return None
@@ -329,6 +336,8 @@ def read_jobs(limit=100, include_terminal=True):
 
 
 def cancel_job(job_id, reason="cancelled by user"):
+    if not _safe_job_id(job_id):
+        return False
     directory = jobs_state_root() / str(job_id)
     if not directory.is_dir():
         return False
@@ -339,6 +348,8 @@ def cancel_job(job_id, reason="cancelled by user"):
 
 
 def read_log(job_id, limit=200):
+    if not _safe_job_id(job_id):
+        return []
     path = jobs_state_root() / str(job_id) / "events.jsonl"
     if not path.is_file():
         return []

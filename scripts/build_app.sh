@@ -68,6 +68,7 @@ cp "$ROOT/scripts/mct.py" "$APP/Contents/Resources/Scripts/mct.py"
 cp "$ROOT/bin/mct" "$APP/Contents/Resources/Scripts/mct"
 chmod +x "$APP/Contents/Resources/Scripts/mct.py" "$APP/Contents/Resources/Scripts/mct"
 cp "$ROOT/docs/新工具开发指南.md" "$APP/Contents/Resources/新工具开发指南.md" 2>/dev/null || true
+cp "$ROOT/docs/原生工具开发指南.md" "$APP/Contents/Resources/原生工具开发指南.md" 2>/dev/null || true
 cp "$ROOT/docs/工具接口审计与Agent适配-2026-10.md" "$APP/Contents/Resources/工具接口审计与Agent适配-2026-10.md" 2>/dev/null || true
 
 codesign --force --deep --sign - "$APP" >/dev/null 2>&1 || true

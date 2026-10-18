@@ -284,15 +284,17 @@ public enum ToolRegistry {
         var directories: [URL] = []
         let env = ProcessInfo.processInfo.environment
 
-        if let custom = env["TOOLBOX_TOOLS_DIR"], !custom.isEmpty {
-            directories.append(URL(fileURLWithPath: custom, isDirectory: true))
-        }
+        // 后扫描到的同 id 工具覆盖先扫描到的；TOOLBOX_TOOLS_DIR 放在最后，
+        // 便于开发/测试时覆盖内置或用户工具。
         if let resource = Bundle.main.resourceURL {
             directories.append(resource.appendingPathComponent("Tools", isDirectory: true))
         }
         directories.append(URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
             .appendingPathComponent("Tools", isDirectory: true))
         directories.append(ToolboxPaths.applicationSupport.appendingPathComponent("Tools", isDirectory: true))
+        if let custom = env["TOOLBOX_TOOLS_DIR"], !custom.isEmpty {
+            directories.append(URL(fileURLWithPath: custom, isDirectory: true))
+        }
         return directories
     }
 

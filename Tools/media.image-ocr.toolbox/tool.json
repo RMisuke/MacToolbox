@@ -10,7 +10,7 @@
     "capability": "media.image.ocr",
     "description": "用 macOS Vision 识别图片文字，支持中/繁/英/日/韩，输出 TXT 或 JSON（含置信度与归一化坐标）。批量用 mct batch。",
     "stability": "stable",
-    "readOnly": true,
+    "readOnly": false,
     "idempotent": true,
     "timeoutSec": 300,
     "checkpoint": "never",

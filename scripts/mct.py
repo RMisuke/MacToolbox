@@ -28,6 +28,8 @@ import os
 import queue
 import re
 import shlex
+import shutil
+import tempfile
 import signal
 import subprocess
 import sys
@@ -1240,6 +1242,142 @@ def cmd_batch(args):
     return EXIT_OK
 
 
+# ---------------------------------------------------------------- install
+
+def _extract_tool_source(source: Path, work: Path):
+    if source.is_dir():
+        return source
+    if source.is_file() and source.suffix.lower() == ".zip":
+        import zipfile
+        try:
+            with zipfile.ZipFile(source) as archive:
+                for member in archive.infolist():
+                    target = (work / member.filename).resolve()
+                    if not str(target).startswith(str(work.resolve()) + os.sep):
+                        raise MCTError("压缩包包含非法路径：%s" % member.filename, EXIT_USAGE)
+                archive.extractall(work)
+                # zip 不一定保留 Unix 执行位；按 external_attr 尽力恢复。
+                for member in archive.infolist():
+                    target = work / member.filename
+                    mode = (member.external_attr >> 16) & 0o777
+                    if mode and target.is_file():
+                        try:
+                            os.chmod(target, mode)
+                        except OSError:
+                            pass
+        except zipfile.BadZipFile as exc:
+            raise MCTError("不是合法 zip：%s" % exc, EXIT_USAGE)
+        return work
+    if source.is_file() and source.name == "tool.json":
+        return source.parent
+    raise MCTError("安装源必须是 .toolbox 目录、tool.json 或 .zip：%s" % source, EXIT_USAGE)
+
+
+def _find_tool_root(path: Path):
+    if (path / "tool.json").is_file():
+        return path
+    children = [child for child in path.iterdir()
+                if child.is_dir() and (child / "tool.json").is_file()]
+    if len(children) == 1:
+        return children[0]
+    if not children:
+        raise MCTError("安装源里找不到 tool.json", EXIT_USAGE)
+    raise MCTError("安装源里包含多个工具，请逐个安装", EXIT_USAGE)
+
+
+def cmd_install(args):
+    source = Path(args.source).expanduser().resolve()
+    if not source.exists():
+        raise MCTError("安装源不存在：%s" % source, EXIT_NOT_FOUND)
+    target_dir = Path(args.into).expanduser() if args.into else spec.data_root() / "Tools"
+    try:
+        target_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise MCTError("用户工具目录不可写：%s（%s）" % (target_dir, exc), EXIT_USAGE)
+
+    work = Path(tempfile.mkdtemp(prefix="mct-install-"))
+    try:
+        root = _find_tool_root(_extract_tool_source(source, work))
+        issues = []
+        manifest = spec.load_manifest(root, issues)
+        if manifest is None:
+            raise MCTError("安装源没有合法 tool.json：%s" % root, EXIT_USAGE)
+        issues.extend(spec.validate_manifest(
+            manifest, root, strict=not args.allow_legacy,
+            check_files=True, check_python=True))
+        errors = [item for item in issues if item.is_error]
+        if errors:
+            raise MCTError(
+                "安装源校验失败：\n- " + "\n- ".join(item.message for item in errors),
+                EXIT_USAGE)
+        tool_id = str(manifest.get("id"))
+        destination = target_dir / (tool_id + ".toolbox")
+        if destination.exists() and not args.force:
+            raise MCTError("目标已存在：%s（加 --force 覆盖）" % destination, EXIT_USAGE)
+        overrides_builtin = (spec.repo_root() / "Tools" / (tool_id + ".toolbox")).is_dir()
+
+        staging = target_dir / (".install-" + tool_id + "-" + hashlib_suffix())
+        if staging.exists():
+            shutil.rmtree(staging)
+        shutil.copytree(root, staging)
+        for junk in list(staging.rglob("__pycache__")):
+            shutil.rmtree(junk, ignore_errors=True)
+        for junk in list(staging.rglob(".DS_Store")):
+            junk.unlink(missing_ok=True)
+        # 安装后再校验一次，避免复制过程破坏文件。
+        issues = spec.validate_manifest(
+            manifest, staging, strict=not args.allow_legacy,
+            check_files=True, check_python=True)
+        errors = [item for item in issues if item.is_error]
+        if errors:
+            shutil.rmtree(staging, ignore_errors=True)
+            raise MCTError(
+                "安装校验失败：\n- " + "\n- ".join(item.message for item in errors),
+                EXIT_USAGE)
+        if destination.exists():
+            shutil.rmtree(destination)
+        os.replace(staging, destination)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+    result = {
+        "ok": True,
+        "id": tool_id,
+        "version": str(manifest.get("version")),
+        "path": str(destination),
+        "overridesBuiltin": overrides_builtin,
+        "force": bool(args.force),
+        "next": "App「工具管理 → 重新扫描」即可加载；CLI 可直接 mct describe %s" % tool_id,
+    }
+    if args.json:
+        print_json(result)
+    else:
+        print("installed: %s" % tool_id)
+        print("path:      %s" % destination)
+        if overrides_builtin:
+            print("warning:   同 id 内置工具会被该用户工具覆盖")
+        print("next:      重新扫描 App，或运行 mct describe %s" % tool_id)
+    return EXIT_OK
+
+
+def cmd_uninstall(args):
+    if not spec.ID_RE.match(str(args.tool_id)):
+        raise MCTError("非法工具 id：%s" % args.tool_id, EXIT_USAGE)
+    target_dir = Path(args.from_dir).expanduser() if args.from_dir else spec.data_root() / "Tools"
+    destination = target_dir / (str(args.tool_id) + ".toolbox")
+    if not destination.is_dir():
+        raise MCTError("用户工具目录里没有：%s" % destination, EXIT_NOT_FOUND)
+    if not args.yes:
+        raise MCTError("删除第三方工具需要 --yes", EXIT_USAGE)
+    shutil.rmtree(destination)
+    result = {"ok": True, "id": args.tool_id, "path": str(destination), "removed": True}
+    if args.json:
+        print_json(result)
+    else:
+        print("uninstalled: %s" % args.tool_id)
+    return EXIT_OK
+
+
 # ---------------------------------------------------------------- agent jobs
 
 def cmd_jobs(args):
@@ -1264,6 +1402,8 @@ def cmd_jobs(args):
             print("%d job(s)" % len(jobs))
         return EXIT_OK
     if action == "show":
+        if not args.job_id or "/" in args.job_id or "\\" in args.job_id or ".." in args.job_id:
+            raise MCTError("非法 job id：%s" % args.job_id, EXIT_USAGE)
         job = agent_state.read_job(args.job_id)
         if job is None:
             raise MCTError("找不到 Agent 任务：%s" % args.job_id, EXIT_NOT_FOUND)
@@ -1292,6 +1432,8 @@ def cmd_jobs(args):
                     print(line)
         return EXIT_OK
     if action == "cancel":
+        if not args.job_id or "/" in args.job_id or "\\" in args.job_id or ".." in args.job_id:
+            raise MCTError("非法 job id：%s" % args.job_id, EXIT_USAGE)
         if not agent_state.cancel_job(args.job_id):
             raise MCTError("找不到 Agent 任务：%s" % args.job_id, EXIT_NOT_FOUND)
         if args.json:
@@ -1798,7 +1940,7 @@ def cmd_mcp(args):
 def add_common_tool_dirs(parser):
     # 子命令上也接受 --tools-dir；SUPPRESS 让根命令的同名参数继续生效。
     parser.add_argument("--tools-dir", action="append", default=argparse.SUPPRESS,
-                        help="额外工具目录（可重复；优先级高于内置/用户目录）")
+                        help="额外工具目录（可重复；最后扫描，覆盖同名工具）")
 
 
 def build_parser():
@@ -1809,7 +1951,7 @@ def build_parser():
     parser.add_argument("--version", action="version",
                         version="mct %s" % spec.SPEC_VERSION)
     parser.add_argument("--tools-dir", action="append", default=[],
-                        help="额外工具目录（可重复）")
+                        help="额外工具目录（可重复；最后扫描，覆盖同名工具）")
     sub = parser.add_subparsers(dest="command")
 
     p = sub.add_parser("list", help="列出工具")
@@ -1931,6 +2073,21 @@ def build_parser():
     p.add_argument("--lock-timeout", type=float, default=None)
     add_common_tool_dirs(p)
     p.set_defaults(func=cmd_batch)
+
+    p = sub.add_parser("install", help="安装第三方 .toolbox 到用户工具目录")
+    p.add_argument("source", help=".toolbox 目录、tool.json 或 .zip")
+    p.add_argument("--into", default="", help="目标目录；默认用户 Tools/")
+    p.add_argument("--force", action="store_true", help="覆盖同 id 用户工具")
+    p.add_argument("--allow-legacy", action="store_true", help="允许缺失 agent 的旧工具")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_install)
+
+    p = sub.add_parser("uninstall", help="删除用户目录里的第三方工具")
+    p.add_argument("tool_id")
+    p.add_argument("--from", dest="from_dir", default="", help="从指定用户工具目录删除")
+    p.add_argument("--yes", action="store_true", help="确认删除")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_uninstall)
 
     p = sub.add_parser("jobs", help="查看/取消 Agent 任务（与 GUI 同一份状态）")
     jobs_sub = p.add_subparsers(dest="jobs_action")

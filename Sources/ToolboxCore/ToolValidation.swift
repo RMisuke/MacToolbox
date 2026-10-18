@@ -77,8 +77,9 @@ public enum ToolValidator {
         }
         let nativeView = manifest.nativeView?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let isNative = !nativeView.isEmpty
-        if isNative, !["homebrew", "imageOCR"].contains(nativeView) {
-            error("nativeView 不支持：\(nativeView)；当前支持 homebrew / imageOCR")
+        let supportedNativeViews = NativeToolKind.allCases.map(\.rawValue)
+        if isNative, !supportedNativeViews.contains(nativeView) {
+            error("nativeView 不支持：\(nativeView)；当前支持 \(supportedNativeViews.joined(separator: " / "))")
         }
 
         // 所有工具都应声明 run：GUI 可以走 nativeView，CLI/Agent 走 run。

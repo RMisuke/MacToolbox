@@ -307,6 +307,148 @@ class ToolboxCLITests(unittest.TestCase):
             self.stop_mcp(process)
 
 
+    def test_install_uninstall_and_external_loading(self):
+        self.make_echo()
+        target = self.data_dir / "Tools"
+        installed = run([
+            sys.executable, str(MCT), "install",
+            str(self.tools_dir / "demo.echo.toolbox"),
+            "--into", str(target), "--json",
+        ], self.env)
+        self.assertEqual(installed.returncode, 0, installed.stderr + installed.stdout)
+        payload = json.loads(installed.stdout)
+        self.assertTrue(payload["ok"])
+        self.assertTrue((target / "demo.echo.toolbox" / "tool.json").is_file())
+
+        # 用户工具目录就是第三方工具的正式加载路径：不带 --tools-dir 也能发现并运行。
+        listed = run([
+            sys.executable, str(MCT), "list", "--json",
+        ], self.env)
+        self.assertEqual(listed.returncode, 0, listed.stderr)
+        ids = [tool["id"] for tool in json.loads(listed.stdout)["tools"]]
+        self.assertIn("demo.echo", ids)
+
+        ran = run([
+            sys.executable, str(MCT), "run", "demo.echo",
+            "--input", "text=installed", "--json",
+        ], self.env)
+        self.assertEqual(ran.returncode, 0, ran.stderr + ran.stdout)
+        self.assertTrue(json.loads(ran.stdout)["ok"])
+
+        # 外部目录 / TOOLBOX_TOOLS_DIR 也是合法来源。
+        catalog = spec.discover(explicit=[str(self.tools_dir)])
+        self.assertIn("demo.echo", {tool.id for tool in catalog.tools})
+        catalog = spec.discover(env={
+            "MCT_DATA_DIR": str(self.data_dir),
+            "TOOLBOX_TOOLS_DIR": str(self.tools_dir),
+        })
+        self.assertIn("demo.echo", {tool.id for tool in catalog.tools})
+
+        removed = run([
+            sys.executable, str(MCT), "uninstall", "demo.echo",
+            "--yes", "--json",
+        ], self.env)
+        self.assertEqual(removed.returncode, 0, removed.stderr + removed.stdout)
+        self.assertFalse((target / "demo.echo.toolbox").exists())
+
+    def test_install_requires_agent_unless_legacy(self):
+        tool_dir = self.tools_dir / "legacy.plain.toolbox"
+        (tool_dir / "scripts").mkdir(parents=True)
+        (tool_dir / "tool.json").write_text(json.dumps({
+            "schemaVersion": 1, "id": "legacy.plain", "name": "旧工具",
+            "version": "0.1.0", "category": "示例", "summary": "无 agent",
+            "inputs": [{"key": "text", "type": "text", "label": "文本",
+                        "default": "x", "required": True, "help": "测试"}],
+            "run": {"command": "/usr/bin/env",
+                    "args": ["python3", "{{toolDir}}/scripts/tool.py", "run",
+                             "--config", "{{configFile}}"]},
+        }, ensure_ascii=False, indent=2), encoding="utf-8")
+        (tool_dir / "scripts" / "tool.py").write_text(
+            "import json, sys\n"
+            "print(json.dumps({'type':'result','ok':True,'summary':'ok','artifacts':[]}))\n",
+            encoding="utf-8")
+        target = self.data_dir / "Tools"
+        rejected = run([
+            sys.executable, str(MCT), "install", str(tool_dir),
+            "--into", str(target), "--json",
+        ], self.env)
+        self.assertEqual(rejected.returncode, 2, rejected.stdout + rejected.stderr)
+        allowed = run([
+            sys.executable, str(MCT), "install", str(tool_dir),
+            "--into", str(target), "--allow-legacy", "--json",
+        ], self.env)
+        self.assertEqual(allowed.returncode, 0, allowed.stderr + allowed.stdout)
+
+    def test_external_ai_fixture_loads_and_runs(self):
+        fixture_root = ROOT / "Tests" / "fixtures"
+        fixture = fixture_root / "external.file-stats.toolbox"
+        self.assertTrue((fixture / "tool.json").is_file())
+        linted = run([sys.executable, str(LINT), str(fixture), "--strict"])
+        self.assertEqual(linted.returncode, 0, linted.stdout + linted.stderr)
+        sample = self.temp / "sample.txt"
+        sample.write_text("alpha\nbeta\ngamma\n", encoding="utf-8")
+
+        ran = run([
+            sys.executable, str(MCT), "--tools-dir", str(fixture_root),
+            "run", "external.file-stats", "--input", "file=%s" % sample,
+            "--input", "includeLines=true", "--json",
+        ], self.env)
+        self.assertEqual(ran.returncode, 0, ran.stderr + ran.stdout)
+        payload = json.loads(ran.stdout)
+        self.assertTrue(payload["ok"])
+        self.assertEqual(len(payload["artifacts"]), 2)
+        self.assertTrue(all(Path(item["path"]).is_file() for item in payload["artifacts"]))
+
+        installed = run([
+            sys.executable, str(MCT), "install", str(fixture), "--json",
+        ], self.env)
+        self.assertEqual(installed.returncode, 0, installed.stderr + installed.stdout)
+        listed = run([sys.executable, str(MCT), "list", "--json"], self.env)
+        self.assertIn("external.file-stats",
+                      [item["id"] for item in json.loads(listed.stdout)["tools"]])
+
+    def test_explicit_tools_dir_overrides_user_tool(self):
+        self.make_echo()
+        user_tools = self.data_dir / "Tools"
+        user_tools.mkdir(parents=True)
+        user_copy = user_tools / "demo.echo.toolbox"
+        shutil.copytree(self.tools_dir / "demo.echo.toolbox", user_copy)
+        explicit = self.temp / "explicit-tools"
+        explicit.mkdir()
+        explicit_tool = explicit / "demo.echo.toolbox"
+        shutil.copytree(self.tools_dir / "demo.echo.toolbox", explicit_tool)
+        for path, name in ((user_copy / "tool.json", "User Echo"),
+                           (explicit_tool / "tool.json", "Explicit Echo")):
+            manifest = json.loads(path.read_text(encoding="utf-8"))
+            manifest["name"] = name
+            path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        described = run([
+            sys.executable, str(MCT), "--tools-dir", str(explicit),
+            "describe", "demo.echo", "--json",
+        ], self.env)
+        self.assertEqual(described.returncode, 0, described.stderr)
+        self.assertEqual(json.loads(described.stdout)["name"], "Explicit Echo")
+
+        described = run([
+            sys.executable, str(MCT), "describe", "demo.echo", "--json",
+        ], self.env)
+        self.assertEqual(json.loads(described.stdout)["name"], "User Echo")
+
+    def test_install_from_zip(self):
+        self.make_echo()
+        import zipfile
+        archive = self.temp / "demo.echo.zip"
+        with zipfile.ZipFile(archive, "w") as handle:
+            for path in (self.tools_dir / "demo.echo.toolbox").rglob("*"):
+                if path.is_file():
+                    handle.write(path, path.relative_to(self.tools_dir))
+        installed = run([
+            sys.executable, str(MCT), "install", str(archive), "--json",
+        ], self.env)
+        self.assertEqual(installed.returncode, 0, installed.stderr + installed.stdout)
+        self.assertTrue((self.data_dir / "Tools" / "demo.echo.toolbox" / "tool.json").is_file())
+
     def test_agent_job_state_and_jobs_commands(self):
         self.make_echo()
         ran = run([

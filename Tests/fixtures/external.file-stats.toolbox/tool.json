@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "id": "external.file-stats",
+  "name": "文件统计",
+  "version": "0.1.0",
+  "category": "示例",
+  "icon": "doc.text.magnifyingglass",
+  "summary": "统计单个文件的字节数、行数与修改时间，输出 stats.json 和 stats.txt。",
+  "inputs": [
+    {
+      "key": "file",
+      "type": "file",
+      "label": "目标文件",
+      "required": true,
+      "default": "",
+      "placeholder": "选择或拖入一个文件",
+      "help": "要统计的本地文件；只读取，不会修改原文件。",
+      "group": "基础"
+    },
+    {
+      "key": "includeLines",
+      "type": "toggle",
+      "label": "统计行数",
+      "default": true,
+      "help": "开启后按逻辑行统计（末尾无换行符的最后一行也计入）；大文件会读取更久。",
+      "group": "基础"
+    },
+    {
+      "key": "outputDir",
+      "type": "directory",
+      "label": "输出目录",
+      "required": false,
+      "default": "",
+      "placeholder": "留空则写入任务目录",
+      "help": "可选。留空时写入当前任务目录；选择后 stats.json 和 stats.txt 会写入该目录。",
+      "group": "输出"
+    }
+  ],
+  "quick": {
+    "inputs": ["file", "includeLines"]
+  },
+  "agent": {
+    "capability": "external.file-stats",
+    "description": "读取一个文件并统计字节数、行数（可选）和修改时间，生成 stats.json 与 stats.txt；不修改输入文件。",
+    "stability": "experimental",
+    "readOnly": false,
+    "idempotent": true,
+    "timeoutSec": 300,
+    "checkpoint": "never",
+    "tags": ["file", "stats", "text", "report", "example"],
+    "outputs": ["json", "text"],
+    "examples": [
+      {
+        "title": "统计文本文件的字节数和行数",
+        "inputs": {
+          "file": "/tmp/example.txt",
+          "includeLines": true
+        }
+      },
+      {
+        "title": "只统计字节数和修改时间",
+        "inputs": {
+          "file": "/tmp/example.txt",
+          "includeLines": false
+        }
+      }
+    ]
+  },
+  "run": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "run",
+      "--config",
+      "{{configFile}}"
+    ]
+  },
+  "doctor": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "doctor",
+      "--config",
+      "{{configFile}}"
+    ]
+  },
+  "setup": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "setup",
+      "--config",
+      "{{configFile}}"
+    ]
+  }
+}

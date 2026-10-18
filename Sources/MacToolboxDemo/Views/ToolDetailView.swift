@@ -11,12 +11,8 @@ struct ToolDetailView: View {
     @ViewBuilder
     var body: some View {
         Group {
-            if tool.manifest.nativeView == "homebrew" {
-                BrewManagerView()
-                    .environmentObject(model)
-                    .environmentObject(model.brewService)
-            } else if tool.manifest.nativeView == "imageOCR" {
-                ImageOCRView(tool: tool)
+            if let kind = tool.manifest.nativeKind {
+                nativeBody(kind)
             } else {
                 standardBody
             }
@@ -29,6 +25,18 @@ struct ToolDetailView: View {
             }
         }
         .onReceive(model.doctor.objectWillChange) { _ in }
+    }
+
+    @ViewBuilder
+    private func nativeBody(_ kind: NativeToolKind) -> some View {
+        switch kind {
+        case .homebrew:
+            BrewManagerView()
+                .environmentObject(model)
+                .environmentObject(model.brewService)
+        case .imageOCR:
+            ImageOCRView(tool: tool)
+        }
     }
 
     private var standardBody: some View {

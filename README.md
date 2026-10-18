@@ -11,6 +11,7 @@
 - Agent 任务实时监控：CLI/MCP 任务在 GUI 任务页显示进度/状态，可取消、打开产物
 - CLI/Agent 与 GUI 共用跨进程 GPU/网络/CPU 资源锁，Agent 不会绕过调度器
 - MCP 完整能力：tools/resources/prompts + progress/cancel 通知
+- 第三方工具零源码加载：`mct install`（目录/zip）+ 用户 Tools/，App 重新扫描即可
 - Homebrew 管理器：软件包/依赖/更新/brew doctor/镜像源
 - 图片格式转换：JPEG/PNG/WebP/AVIF/HEIC/JPEG XL，批量、透明通道、EXIF/ICC
 - 视频格式转换：MP4/MKV/WebM/MOV/GIF，H.264/H.265/AV1/VP9/ProRes，批量与复制流
@@ -355,6 +356,7 @@ MacToolbox/
 │   │   ├── ResourceScheduler.swift # gpu=1 / network=2 / cpu
 │   │   ├── CrossProcessResourceLocks.swift # 与 CLI 共用的 fcntl 资源锁
 │   │   ├── AgentJobs.swift         # AgentJobs 模型 + GUI 轮询监控
+│   │   ├── NativeToolRegistry.swift # nativeView 枚举与详情路由单一注册点
 │   │   ├── ProcessTree.swift       # 进程树 SIGTERM/SIGKILL
 │   │   ├── OrphanCleaner.swift     # 启动清理孤儿进程
 │   │   ├── SecretStore.swift       # Keychain
@@ -411,6 +413,7 @@ MacToolbox/
 ├── scripts/mct.py              # mct 实现 + MCP stdio server
 ├── scripts/make_test_video.sh
 ├── docs/新工具开发指南.md      # Agent 向新工具开发标准
+├── docs/原生工具开发指南.md    # nativeView / C 级工具注册与测试
 ├── docs/工具接口审计与Agent适配-2026-10.md
 └── Package.swift               # 供 Xcode / 后续 SwiftPM 迁移
 ```
@@ -697,6 +700,11 @@ bin/mct batch media.image-ocr \
 bin/mct run media.subtitle --input video=/tmp/a.mp4 --input reviewMode=manual
 bin/mct resume --job ~/Library/Application\ Support/MacToolboxDemo/Jobs/<id>
 
+# 第三方工具：目录 / tool.json / zip → 用户 Tools/，App 重新扫描即可加载
+bin/mct install /tmp/my.toolbox --json
+bin/mct install /tmp/my.toolbox.zip --force
+bin/mct uninstall my.tool --yes
+
 # Agent 任务状态（与 GUI 同一份）
 bin/mct jobs list --json
 bin/mct jobs show <jobID> --json
@@ -712,7 +720,8 @@ bin/mct mcp
 - 每个 jobDir 会写 `mct-result.json`，包含 status / artifacts / error / durationMs。
 - 5 个工具全部有 CLI：3 个协议工具 + `system.homebrew` + `media.image-ocr`。
 - 回归测试：`python3 -m unittest discover -s Tests -v`（覆盖 CLI、Schema、检查点、
-  资源锁、AgentJobs 状态、MCP resources/prompts/subscribe/logging/progress/cancel）。
+  资源锁、AgentJobs 状态、MCP resources/prompts/subscribe/logging/progress/cancel、
+  第三方 install/uninstall/zip、工具目录优先级、外部 AI 工具 fixture）。
 
 ### 6.5.1 Agent 任务在 GUI 里实时可见
 
@@ -742,7 +751,25 @@ Python `fcntl.lockf` 与 Swift `fcntl(F_SETLK)` 使用同一批文件；`gpu=1`�
 `network=2`、`cpu=核数-1`。两个并发 `mct run` 的第二个会显示 `queued`，
 等第一个释放后才运行。`--no-locks` 只用于调试。
 
-### 6.5.3 MCP 完整能力
+### 6.5.3 第三方工具加载
+
+第三方工具不需要改源码，也不需要放进仓库 `Tools/`：
+
+```bash
+# 目录 / tool.json / zip 都可以
+bin/mct install ~/Downloads/external.file-stats.toolbox --json
+bin/mct install ~/Downloads/external.file-stats.zip --force
+
+# 安装后 App「工具管理 → 重新扫描」即可；CLI 直接 list/run
+bin/mct list --json
+bin/mct run external.file-stats --input file=/tmp/a.txt --json
+```
+
+加载优先级（后者覆盖前者）：内置 `Tools/` → 当前目录 `Tools/` → 用户工具目录
+`$MCT_DATA_DIR/Tools` → `TOOLBOX_TOOLS_DIR` → `mct --tools-dir`。
+`mct install` 会做严格校验（要求 `run` + `agent`），旧工具可加 `--allow-legacy`。
+
+### 6.5.4 MCP 完整能力
 
 `mct mcp` 支持：
 
@@ -766,7 +793,8 @@ Python `fcntl.lockf` 与 Swift `fcntl(F_SETLK)` 使用同一批文件；`gpu=1`�
 ![新建工具](docs/screenshots/new-tool.png)
 
 完整契约、字段表、协议事件和 Agent 检查清单见
-[新工具开发指南（Agent 版）](docs/新工具开发指南.md)。最短路径：
+[新工具开发指南（Agent 版）](docs/新工具开发指南.md)；需要定制 SwiftUI 界面的
+C 级工具见[原生工具开发指南](docs/原生工具开发指南.md)。最短路径：
 
 ```bash
 # 1) 从 _template.toolbox 生成到用户工具目录

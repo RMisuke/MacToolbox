@@ -32,6 +32,8 @@ bin/mct run demo.echo --input text=hello --json
   否则只有 GUI、没有 CLI/Agent 入口。
 - 统一 CLI 是 `bin/mct`（实现 `scripts/mct.py`，契约 `scripts/toolbox_spec.py`）；
   新工具验收必须跑 `mct describe/schema/doctor/run`，不能只靠 App 手点。
+- 第三方工具不需要改源码：`mct install <目录|zip>` 会装到用户 Tools/，
+  App「重新扫描」即可；`--tools-dir` / `TOOLBOX_TOOLS_DIR` 可覆盖同名工具。
 - Agent 任务状态在 `AgentJobs/<jobID>/job.json`（`scripts/agent_jobs.py`），
   GUI 由 `Sources/ToolboxCore/AgentJobs.swift` 轮询显示；CLI 用 `mct jobs list/show/cancel`。
 - 工具的 `resources` 会同时被 GUI 和 CLI 用 `Locks/*.lock`（fcntl）调度；
@@ -39,7 +41,9 @@ bin/mct run demo.echo --input text=hello --json
 - `Tools/_template.toolbox/` 是隐藏模板，以 `_` 开头的目录不会出现在工具列表。
 - 原生工具用 `nativeView`（当前为 `system.homebrew` 与 `media.image-ocr`）：
   GUI 由 `BrewManagerView` / `ImageOCRView` 直接管理；CLI/Agent 仍通过 `run` 走 JobRunner/Protocol。
-  不要给普通新工具设置 `nativeView`。
+  不要给普通新工具设置 `nativeView`；新增/修改原生工具先读
+  [`docs/原生工具开发指南.md`](docs/原生工具开发指南.md)，并同步
+  `NativeToolKind`、`ToolDetailView.nativeBody`、manifest 与 CLI 脚本。
 - 当前执行器只支持 `run.command + run.args`；`run.mode = "steps"` 未实现。
 - stdout 必须是 JSONL Tool Protocol；stderr 才是人类日志。
 - 新增或修改 `tool.json` 后必须跑 `tool_lint.py --all --strict`，再在 App 里真实跑一遍。

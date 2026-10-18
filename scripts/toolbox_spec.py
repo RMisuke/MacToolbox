@@ -118,8 +118,13 @@ def search_directories(explicit=None, env=None) -> list:
         if resolved not in directories:
             directories.append(resolved)
 
-    for raw in explicit or []:
-        add(raw)
+    root = repo_root()
+    # 扫描顺序即覆盖顺序：后扫描到的同 id 工具覆盖先扫描到的。
+    # 仓库布局：<root>/scripts/toolbox_spec.py + <root>/Tools
+    # App 布局：<App>.app/Contents/Resources/Scripts/toolbox_spec.py + Resources/Tools
+    add(root / "Tools")
+    add(Path.cwd() / "Tools")
+    add(data_root(env) / "Tools")
 
     env_dirs = str(env.get("TOOLBOX_TOOLS_DIR", "")).strip()
     if env_dirs:
@@ -128,12 +133,9 @@ def search_directories(explicit=None, env=None) -> list:
         for piece in pieces:
             add(piece)
 
-    root = repo_root()
-    # 仓库布局：<root>/scripts/toolbox_spec.py + <root>/Tools
-    # App 布局：<App>.app/Contents/Resources/Scripts/toolbox_spec.py + Resources/Tools
-    add(root / "Tools")
-    add(Path.cwd() / "Tools")
-    add(data_root(env) / "Tools")
+    # --tools-dir 是调用者显式指定的最高优先级来源。
+    for raw in explicit or []:
+        add(raw)
     return directories
 
 
