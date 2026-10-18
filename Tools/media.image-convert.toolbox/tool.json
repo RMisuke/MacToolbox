@@ -1,0 +1,475 @@
+{
+  "schemaVersion": 1,
+  "id": "media.image-convert",
+  "name": "图片格式转换",
+  "version": "0.2.0",
+  "category": "媒体",
+  "icon": "photo.on.rectangle.angled",
+  "summary": "批量转换图片格式，支持 JPEG / PNG / WebP / AVIF / HEIC / JPEG XL，并尽量保留 EXIF / ICC。",
+  "agent": {
+    "capability": "media.image.convert",
+    "description": "把单张图片转换为 JPEG/PNG/WebP/AVIF/HEIC/TIFF/GIF/ICO/JXL 等格式，可选质量、缩放、透明背景和 EXIF/ICC 保留。批量用 mct batch。",
+    "stability": "stable",
+    "readOnly": false,
+    "idempotent": true,
+    "timeoutSec": 900,
+    "checkpoint": "never",
+    "tags": [
+      "image",
+      "convert",
+      "batch",
+      "ffmpeg",
+      "sips"
+    ],
+    "outputs": [
+      "image"
+    ],
+    "examples": [
+      {
+        "title": "PNG 转 WebP",
+        "inputs": {
+          "image": "/tmp/in.png",
+          "format": "webp",
+          "quality": 82
+        }
+      },
+      {
+        "title": "长边 2400 的 JPEG",
+        "inputs": {
+          "image": "/tmp/in.heic",
+          "format": "jpg",
+          "maxSize": 2400,
+          "quality": 88
+        }
+      }
+    ]
+  },
+  "requirements": [
+    {
+      "kind": "cli",
+      "name": "ffmpeg",
+      "installHint": "brew install ffmpeg"
+    },
+    {
+      "kind": "cli",
+      "name": "ffprobe",
+      "installHint": "brew install ffmpeg"
+    },
+    {
+      "kind": "cli",
+      "name": "sips",
+      "installHint": "macOS 自带"
+    },
+    {
+      "kind": "cli",
+      "name": "cwebp",
+      "installHint": "brew install webp"
+    },
+    {
+      "kind": "cli",
+      "name": "avifenc",
+      "installHint": "brew install libavif",
+      "optional": true
+    },
+    {
+      "kind": "cli",
+      "name": "exiftool",
+      "installHint": "brew install exiftool（保留 EXIF / ICC 推荐）",
+      "optional": true
+    },
+    {
+      "kind": "cli",
+      "name": "cjxl",
+      "installHint": "brew install jpeg-xl（JPEG XL 输出需要）",
+      "optional": true
+    }
+  ],
+  "inputs": [
+    {
+      "key": "image",
+      "type": "file",
+      "label": "图片文件",
+      "required": true,
+      "accept": [
+        "jpg",
+        "jpeg",
+        "png",
+        "webp",
+        "heic",
+        "heif",
+        "avif",
+        "tif",
+        "tiff",
+        "bmp",
+        "gif",
+        "apng",
+        "ico",
+        "psd",
+        "svg",
+        "pdf",
+        "jxl",
+        "qoi",
+        "jp2",
+        "j2k",
+        "exr",
+        "tga",
+        "dng",
+        "cr2",
+        "cr3",
+        "nef",
+        "arw",
+        "raf",
+        "orf",
+        "rw2",
+        "pef",
+        "srw"
+      ],
+      "group": "基础",
+      "help": "原图只读，不会修改。HEIC / AVIF / SVG / RAW / PDF 走 macOS 原生解码；PDF 只取第一页，动图默认只转第一帧。"
+    },
+    {
+      "key": "preset",
+      "type": "preset",
+      "label": "输出预设",
+      "default": "custom",
+      "group": "基础",
+      "options": [
+        {
+          "value": "web",
+          "label": "网页轻量（WebP）"
+        },
+        {
+          "value": "apple",
+          "label": "Apple 相册（HEIC）"
+        },
+        {
+          "value": "archive",
+          "label": "无损归档（PNG）"
+        },
+        {
+          "value": "social",
+          "label": "社交分享（JPEG）"
+        },
+        {
+          "value": "custom",
+          "label": "自定义"
+        }
+      ],
+      "help": "预设只覆盖格式、质量、长边和背景；应用后仍可逐项修改，修改后会自动变成「自定义」。"
+    },
+    {
+      "key": "format",
+      "type": "select",
+      "label": "输出格式",
+      "default": "webp",
+      "group": "基础",
+      "options": [
+        {
+          "value": "jpg",
+          "label": "JPEG（最通用）"
+        },
+        {
+          "value": "png",
+          "label": "PNG（无损 / 透明）"
+        },
+        {
+          "value": "webp",
+          "label": "WebP（网页推荐）"
+        },
+        {
+          "value": "avif",
+          "label": "AVIF（高压缩 / 透明）"
+        },
+        {
+          "value": "heic",
+          "label": "HEIC（Apple 相册）"
+        },
+        {
+          "value": "tiff",
+          "label": "TIFF（高质量归档）"
+        },
+        {
+          "value": "bmp",
+          "label": "BMP（无压缩位图）"
+        },
+        {
+          "value": "gif",
+          "label": "GIF（索引色）"
+        },
+        {
+          "value": "ico",
+          "label": "ICO（Windows 图标）"
+        },
+        {
+          "value": "apng",
+          "label": "APNG（透明动画 PNG）"
+        },
+        {
+          "value": "jxl",
+          "label": "JPEG XL（需 cjxl）"
+        }
+      ],
+      "help": "WebP / HEIC / AVIF / JPEG XL 的透明通道会保留；JPEG / BMP 没有 alpha，会按背景色合成。"
+    },
+    {
+      "key": "quality",
+      "type": "number",
+      "label": "质量",
+      "default": 85,
+      "min": 1,
+      "max": 100,
+      "group": "画面",
+      "help": "1–100。JPEG / WebP / AVIF / HEIC / JXL 会使用；PNG / TIFF / BMP / GIF / ICO 为无损或索引色，基本忽略。"
+    },
+    {
+      "key": "maxSize",
+      "type": "number",
+      "label": "长边最大像素",
+      "default": 0,
+      "min": 0,
+      "max": 20000,
+      "group": "画面",
+      "help": "0 = 保持原始尺寸；例如 2400 表示长边最多 2400px，等比缩小，不放大小图。"
+    },
+    {
+      "key": "background",
+      "type": "select",
+      "label": "透明图合成背景",
+      "default": "white",
+      "group": "画面",
+      "options": [
+        {
+          "value": "white",
+          "label": "白色"
+        },
+        {
+          "value": "black",
+          "label": "黑色"
+        }
+      ],
+      "help": "仅当目标是 JPEG / BMP（没有 alpha）且原图有透明区域时使用；其他格式保留透明。"
+    },
+    {
+      "key": "preserveMetadata",
+      "type": "toggle",
+      "label": "保留 EXIF / ICC",
+      "default": true,
+      "group": "元数据",
+      "help": "用 exiftool 复制相机、镜头、时间、GPS、XMP、IPTC 和 ICC。旋转会烘焙进像素，并把 Orientation 归为 1；缩略图不会复制。"
+    },
+    {
+      "key": "conflict",
+      "type": "select",
+      "label": "同名文件",
+      "default": "rename",
+      "group": "输出",
+      "options": [
+        {
+          "value": "rename",
+          "label": "自动加 -1 / -2"
+        },
+        {
+          "value": "overwrite",
+          "label": "覆盖"
+        },
+        {
+          "value": "fail",
+          "label": "报错并停止"
+        }
+      ],
+      "help": "自动改名最安全；覆盖会先写临时文件，成功后再替换，避免半成品。"
+    },
+    {
+      "key": "outputDir",
+      "type": "directory",
+      "label": "输出目录",
+      "default": "",
+      "group": "输出",
+      "placeholder": "留空 = 原图同目录",
+      "help": "批量转换时所有成品放在这里；留空则放在每张原图旁边。"
+    },
+    {
+      "key": "ffmpegPath",
+      "type": "text",
+      "label": "ffmpeg 路径",
+      "default": "",
+      "group": "环境",
+      "advanced": true,
+      "placeholder": "留空自动查找",
+      "help": "一般不需要改；如果使用 ffmpeg-full，可填 /opt/homebrew/opt/ffmpeg-full/bin/ffmpeg。"
+    },
+    {
+      "key": "ffprobePath",
+      "type": "text",
+      "label": "ffprobe 路径",
+      "default": "",
+      "group": "环境",
+      "advanced": true,
+      "placeholder": "留空自动查找",
+      "help": "一般不需要改；和 ffmpeg 同目录。"
+    },
+    {
+      "key": "exiftoolPath",
+      "type": "text",
+      "label": "exiftool 路径",
+      "default": "",
+      "group": "环境",
+      "advanced": true,
+      "placeholder": "留空自动查找",
+      "help": "留空自动查找 /opt/homebrew/bin/exiftool。"
+    },
+    {
+      "key": "cwebpPath",
+      "type": "text",
+      "label": "cwebp 路径",
+      "default": "",
+      "group": "环境",
+      "advanced": true,
+      "placeholder": "留空自动查找",
+      "help": "WebP 输出使用；一般不需要改。"
+    },
+    {
+      "key": "avifencPath",
+      "type": "text",
+      "label": "avifenc 路径",
+      "default": "",
+      "group": "环境",
+      "advanced": true,
+      "placeholder": "留空自动查找",
+      "help": "AVIF 输出优先使用；缺失时回退到 sips。"
+    },
+    {
+      "key": "cjxlPath",
+      "type": "text",
+      "label": "cjxl 路径",
+      "default": "",
+      "group": "环境",
+      "advanced": true,
+      "placeholder": "留空自动查找",
+      "help": "JPEG XL 输出使用；缺失时该格式不可用。"
+    }
+  ],
+  "presets": [
+    {
+      "id": "web",
+      "name": "网页轻量",
+      "values": {
+        "format": "webp",
+        "quality": 82,
+        "maxSize": 2400,
+        "background": "white"
+      }
+    },
+    {
+      "id": "apple",
+      "name": "Apple 相册",
+      "values": {
+        "format": "heic",
+        "quality": 82,
+        "maxSize": 4096,
+        "background": "white"
+      }
+    },
+    {
+      "id": "archive",
+      "name": "无损归档",
+      "values": {
+        "format": "png",
+        "quality": 100,
+        "maxSize": 0,
+        "background": "white"
+      }
+    },
+    {
+      "id": "social",
+      "name": "社交分享",
+      "values": {
+        "format": "jpg",
+        "quality": 88,
+        "maxSize": 2048,
+        "background": "white"
+      }
+    }
+  ],
+  "quick": {
+    "title": "快速转换图片",
+    "inputs": [
+      "image",
+      "format",
+      "quality"
+    ]
+  },
+  "resources": [
+    "cpu"
+  ],
+  "batch": {
+    "title": "批量转换图片",
+    "input": "image",
+    "accept": [
+      "jpg",
+      "jpeg",
+      "png",
+      "webp",
+      "heic",
+      "heif",
+      "avif",
+      "tif",
+      "tiff",
+      "bmp",
+      "gif",
+      "apng",
+      "ico",
+      "psd",
+      "svg",
+      "pdf",
+      "jxl",
+      "qoi",
+      "jp2",
+      "j2k",
+      "exr",
+      "tga",
+      "dng",
+      "cr2",
+      "cr3",
+      "nef",
+      "arw",
+      "raf",
+      "orf",
+      "rw2",
+      "pef",
+      "srw"
+    ],
+    "skipExisting": true,
+    "outputExtension": "jpg"
+  },
+  "run": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "run",
+      "--config",
+      "{{configFile}}"
+    ]
+  },
+  "doctor": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "doctor",
+      "--config",
+      "{{configFile}}"
+    ]
+  },
+  "setup": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "setup",
+      "--config",
+      "{{configFile}}"
+    ]
+  }
+}

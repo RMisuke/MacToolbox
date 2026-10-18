@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "id": "acca-fm-sample",
+  "name": "ACCA FM · 示例词表",
+  "version": 1,
+  "tool": "media.subtitle",
+  "fingerprint": {
+    "filenameKeywords": ["ACCA", "FM", "Financial Management", "Part B"],
+    "teacherNames": ["樊樊", "Flory"],
+    "sampleTerms": ["财会", "折现率", "摊销", "每股收益"],
+    "chapterRange": "1-19"
+  },
+  "hotwords": [
+    "ACCA", "财务会计", "管理会计", "财管", "折现率", "摊销",
+    "股利政策", "代理问题", "优先偿付资本", "资本结构",
+    "ROCE", "ROE", "PBIT", "EPS", "DPS", "NED", "NPV", "IRR"
+  ],
+  "rules": [
+    { "from": "财块", "to": "财会", "source": "user", "confidence": 0.99, "enabled": true, "scope": "global" },
+    { "from": "管块", "to": "管会", "source": "user", "confidence": 0.99, "enabled": true, "scope": "global" },
+    { "from": "财快", "to": "财会", "source": "user", "confidence": 0.95, "enabled": true, "scope": "global" },
+    { "from": "折线率", "to": "折现率", "source": "user", "confidence": 0.99, "enabled": true, "scope": "global" },
+    { "from": "贪销", "to": "摊销", "source": "user", "confidence": 0.98, "enabled": true, "scope": "global" },
+    { "from": "文字体", "to": "文字题", "source": "user", "confidence": 0.95, "enabled": true, "scope": "global" },
+    { "from": "例年考题", "to": "历年考题", "source": "user", "confidence": 0.98, "enabled": true, "scope": "global" },
+    { "from": "七出", "to": "期初", "source": "user", "confidence": 0.95, "enabled": true, "scope": "global" },
+    { "from": "乘上旗下", "to": "承上启下", "source": "user", "confidence": 0.98, "enabled": true, "scope": "global" },
+    { "from": "互为导数", "to": "互为倒数", "source": "user", "confidence": 0.98, "enabled": true, "scope": "global" },
+    { "from": "航权价", "to": "含权价", "source": "user", "confidence": 0.97, "enabled": true, "scope": "global" },
+    { "from": "选择提", "to": "选择题", "source": "user", "confidence": 0.97, "enabled": true, "scope": "global" },
+    { "from": "这一个第一", "to": "这一个D1", "source": "user", "confidence": 0.95, "enabled": true, "scope": "global" },
+    { "from": "银就是美股盈利", "to": "银就是每股盈利", "source": "user", "confidence": 0.99, "enabled": true, "scope": "global" },
+    { "from": "美股", "to": "每股", "source": "user", "confidence": 0.90, "enabled": false, "scope": "global" }
+  ]
+}

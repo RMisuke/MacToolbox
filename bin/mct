@@ -1,0 +1,11 @@
+#!/bin/bash
+# MacToolbox 统一工具 CLI / Agent 入口。
+# 仓库内：bin/mct → scripts/mct.py
+# App 内：Contents/Resources/Scripts/mct → 同目录 mct.py
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ -f "$SCRIPT_DIR/mct.py" ]; then
+    exec /usr/bin/env python3 "$SCRIPT_DIR/mct.py" "$@"
+fi
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+exec /usr/bin/env python3 "$ROOT/scripts/mct.py" "$@"

@@ -1,0 +1,544 @@
+{
+  "schemaVersion": 1,
+  "id": "media.video-convert",
+  "name": "视频格式转换",
+  "version": "0.2.0",
+  "category": "媒体",
+  "icon": "film.stack",
+  "summary": "批量转换视频封装与编码，支持 H.264 / H.265 / AV1 / VP9 / ProRes / GIF。",
+  "agent": {
+    "capability": "media.video.convert",
+    "description": "转换视频封装/编码（H.264/H.265/AV1/VP9/ProRes/GIF），支持质量、分辨率、帧率、音频码率、复制流和元数据。批量用 mct batch。",
+    "stability": "stable",
+    "readOnly": false,
+    "idempotent": true,
+    "timeoutSec": 7200,
+    "checkpoint": "never",
+    "tags": [
+      "video",
+      "convert",
+      "batch",
+      "ffmpeg"
+    ],
+    "outputs": [
+      "video"
+    ],
+    "examples": [
+      {
+        "title": "转通用 MP4",
+        "inputs": {
+          "video": "/tmp/in.mov",
+          "preset": "mp4-h264",
+          "quality": 80
+        }
+      },
+      {
+        "title": "仅换封装",
+        "inputs": {
+          "video": "/tmp/in.mkv",
+          "preset": "remux-mkv"
+        }
+      }
+    ]
+  },
+  "requirements": [
+    {
+      "kind": "cli",
+      "name": "ffmpeg",
+      "installHint": "brew install ffmpeg"
+    },
+    {
+      "kind": "cli",
+      "name": "ffprobe",
+      "installHint": "brew install ffmpeg"
+    }
+  ],
+  "inputs": [
+    {
+      "key": "video",
+      "type": "file",
+      "label": "视频文件",
+      "required": true,
+      "accept": [
+        "mp4",
+        "mov",
+        "mkv",
+        "m4v",
+        "webm",
+        "avi",
+        "flv",
+        "wmv",
+        "mpg",
+        "mpeg",
+        "ts",
+        "m2ts",
+        "3gp",
+        "ogv"
+      ],
+      "group": "基础",
+      "help": "原视频只读，不会修改。默认保留首条视频/音频和元数据；仅换封装时可复制全部流。"
+    },
+    {
+      "key": "preset",
+      "type": "preset",
+      "label": "输出预设",
+      "default": "mp4-h264",
+      "group": "基础",
+      "options": [
+        {
+          "value": "mp4-h264",
+          "label": "通用 MP4（H.264 / AAC，推荐）"
+        },
+        {
+          "value": "apple-hevc",
+          "label": "Apple HEVC（MP4 / AAC）"
+        },
+        {
+          "value": "webm-vp9",
+          "label": "WebM（VP9 / Opus）"
+        },
+        {
+          "value": "av1-mkv",
+          "label": "AV1 MKV（高压缩）"
+        },
+        {
+          "value": "prores-mov",
+          "label": "ProRes 422 MOV（剪辑）"
+        },
+        {
+          "value": "gif",
+          "label": "GIF 动图（无声）"
+        },
+        {
+          "value": "remux-mkv",
+          "label": "仅换封装（复制流）"
+        },
+        {
+          "value": "custom",
+          "label": "自定义"
+        }
+      ],
+      "help": "预设会覆盖封装、编码、质量、分辨率、帧率和音频码率；改任意参数后自动变成「自定义」。"
+    },
+    {
+      "key": "format",
+      "type": "select",
+      "label": "封装格式",
+      "default": "mp4",
+      "group": "基础",
+      "options": [
+        {
+          "value": "mp4",
+          "label": "MP4（最通用）"
+        },
+        {
+          "value": "mov",
+          "label": "MOV（Apple / 剪辑）"
+        },
+        {
+          "value": "mkv",
+          "label": "MKV（多轨道 / 高兼容）"
+        },
+        {
+          "value": "webm",
+          "label": "WebM（网页）"
+        },
+        {
+          "value": "avi",
+          "label": "AVI（老设备）"
+        },
+        {
+          "value": "gif",
+          "label": "GIF 动图"
+        }
+      ],
+      "help": "封装和编码要匹配：WebM 只支持 VP9/AV1 + Opus；MP4 不支持 ProRes；GIF 会忽略编码设置。"
+    },
+    {
+      "key": "videoCodec",
+      "type": "select",
+      "label": "视频编码",
+      "default": "h264",
+      "group": "编码",
+      "options": [
+        {
+          "value": "h264",
+          "label": "H.264 / AVC（兼容最好）"
+        },
+        {
+          "value": "hevc",
+          "label": "H.265 / HEVC（更小）"
+        },
+        {
+          "value": "av1",
+          "label": "AV1（高压缩，较慢）"
+        },
+        {
+          "value": "vp9",
+          "label": "VP9（WebM）"
+        },
+        {
+          "value": "prores",
+          "label": "ProRes 422（剪辑中间码）"
+        },
+        {
+          "value": "copy",
+          "label": "复制原视频流（不重编码）"
+        }
+      ],
+      "help": "复制流最快且无损，但目标封装必须支持源编码；复制时不能改分辨率、帧率或质量。"
+    },
+    {
+      "key": "audioCodec",
+      "type": "select",
+      "label": "音频编码",
+      "default": "aac",
+      "group": "编码",
+      "options": [
+        {
+          "value": "aac",
+          "label": "AAC（MP4 / MOV 推荐）"
+        },
+        {
+          "value": "opus",
+          "label": "Opus（WebM / MKV）"
+        },
+        {
+          "value": "mp3",
+          "label": "MP3（老设备）"
+        },
+        {
+          "value": "flac",
+          "label": "FLAC（无损）"
+        },
+        {
+          "value": "alac",
+          "label": "ALAC（Apple 无损）"
+        },
+        {
+          "value": "pcm",
+          "label": "PCM（剪辑 / MOV）"
+        },
+        {
+          "value": "copy",
+          "label": "复制原音频流"
+        },
+        {
+          "value": "none",
+          "label": "不要音频"
+        }
+      ],
+      "help": "FLAC / ALAC / PCM 会忽略音频码率；复制音频要求目标封装支持源音频编码。"
+    },
+    {
+      "key": "quality",
+      "type": "number",
+      "label": "画面质量",
+      "default": 80,
+      "min": 1,
+      "max": 100,
+      "group": "画面",
+      "help": "1–100。H.264/H.265/AV1/VP9 映射到 CRF；ProRes 使用固定 422 HQ；GIF 映射到调色板颜色数。"
+    },
+    {
+      "key": "resolution",
+      "type": "select",
+      "label": "分辨率上限",
+      "default": "original",
+      "group": "画面",
+      "options": [
+        {
+          "value": "original",
+          "label": "保持原始"
+        },
+        {
+          "value": "2160",
+          "label": "4K（2160p）"
+        },
+        {
+          "value": "1440",
+          "label": "2K（1440p）"
+        },
+        {
+          "value": "1080",
+          "label": "1080p"
+        },
+        {
+          "value": "720",
+          "label": "720p"
+        },
+        {
+          "value": "480",
+          "label": "480p"
+        }
+      ],
+      "help": "按显示方向等比缩小，不放大；只限制高度，宽度自动取偶数。"
+    },
+    {
+      "key": "fps",
+      "type": "select",
+      "label": "帧率上限",
+      "default": "original",
+      "group": "画面",
+      "options": [
+        {
+          "value": "original",
+          "label": "保持原始"
+        },
+        {
+          "value": "60",
+          "label": "60 fps"
+        },
+        {
+          "value": "30",
+          "label": "30 fps"
+        },
+        {
+          "value": "24",
+          "label": "24 fps"
+        },
+        {
+          "value": "15",
+          "label": "15 fps"
+        },
+        {
+          "value": "12",
+          "label": "12 fps（GIF）"
+        }
+      ],
+      "help": "只会降帧，不会补帧；复制视频流时不能改帧率。"
+    },
+    {
+      "key": "audioBitrate",
+      "type": "number",
+      "label": "音频码率（kbps）",
+      "default": 192,
+      "min": 64,
+      "max": 512,
+      "group": "编码",
+      "help": "AAC/Opus/MP3 使用；FLAC/ALAC/PCM 和复制音频忽略。"
+    },
+    {
+      "key": "preserveMetadata",
+      "type": "toggle",
+      "label": "保留元数据与章节",
+      "default": true,
+      "group": "输出",
+      "help": "复制全局元数据、旋转信息和章节；关闭后输出更干净。"
+    },
+    {
+      "key": "conflict",
+      "type": "select",
+      "label": "同名文件",
+      "default": "rename",
+      "group": "输出",
+      "options": [
+        {
+          "value": "rename",
+          "label": "自动加 -1 / -2"
+        },
+        {
+          "value": "overwrite",
+          "label": "覆盖"
+        },
+        {
+          "value": "fail",
+          "label": "报错并停止"
+        }
+      ],
+      "help": "自动改名最安全；覆盖会先写临时文件，成功后再替换。"
+    },
+    {
+      "key": "outputDir",
+      "type": "directory",
+      "label": "输出目录",
+      "default": "",
+      "group": "输出",
+      "placeholder": "留空 = 原视频同目录",
+      "help": "批量转换时所有成品放在这里；留空则放在每个原视频旁边。"
+    },
+    {
+      "key": "ffmpegPath",
+      "type": "text",
+      "label": "ffmpeg 路径",
+      "default": "",
+      "group": "环境",
+      "advanced": true,
+      "placeholder": "留空自动查找",
+      "help": "一般不需要改。"
+    },
+    {
+      "key": "ffprobePath",
+      "type": "text",
+      "label": "ffprobe 路径",
+      "default": "",
+      "group": "环境",
+      "advanced": true,
+      "placeholder": "留空自动查找",
+      "help": "一般不需要改；和 ffmpeg 同目录。"
+    }
+  ],
+  "presets": [
+    {
+      "id": "mp4-h264",
+      "name": "通用 MP4",
+      "values": {
+        "format": "mp4",
+        "videoCodec": "h264",
+        "audioCodec": "aac",
+        "quality": 80,
+        "resolution": "original",
+        "fps": "original",
+        "audioBitrate": 192,
+        "preserveMetadata": true
+      }
+    },
+    {
+      "id": "apple-hevc",
+      "name": "Apple HEVC",
+      "values": {
+        "format": "mp4",
+        "videoCodec": "hevc",
+        "audioCodec": "aac",
+        "quality": 78,
+        "resolution": "original",
+        "fps": "original",
+        "audioBitrate": 192,
+        "preserveMetadata": true
+      }
+    },
+    {
+      "id": "webm-vp9",
+      "name": "WebM VP9",
+      "values": {
+        "format": "webm",
+        "videoCodec": "vp9",
+        "audioCodec": "opus",
+        "quality": 75,
+        "resolution": "original",
+        "fps": "original",
+        "audioBitrate": 160,
+        "preserveMetadata": true
+      }
+    },
+    {
+      "id": "av1-mkv",
+      "name": "AV1 MKV",
+      "values": {
+        "format": "mkv",
+        "videoCodec": "av1",
+        "audioCodec": "opus",
+        "quality": 70,
+        "resolution": "original",
+        "fps": "original",
+        "audioBitrate": 160,
+        "preserveMetadata": true
+      }
+    },
+    {
+      "id": "prores-mov",
+      "name": "ProRes 422 MOV",
+      "values": {
+        "format": "mov",
+        "videoCodec": "prores",
+        "audioCodec": "pcm",
+        "quality": 100,
+        "resolution": "original",
+        "fps": "original",
+        "audioBitrate": 192,
+        "preserveMetadata": true
+      }
+    },
+    {
+      "id": "gif",
+      "name": "GIF 动图",
+      "values": {
+        "format": "gif",
+        "videoCodec": "h264",
+        "audioCodec": "none",
+        "quality": 80,
+        "resolution": "480",
+        "fps": "12",
+        "audioBitrate": 192,
+        "preserveMetadata": false
+      }
+    },
+    {
+      "id": "remux-mkv",
+      "name": "仅换封装",
+      "values": {
+        "format": "mkv",
+        "videoCodec": "copy",
+        "audioCodec": "copy",
+        "quality": 80,
+        "resolution": "original",
+        "fps": "original",
+        "audioBitrate": 192,
+        "preserveMetadata": true
+      }
+    }
+  ],
+  "quick": {
+    "title": "快速转换视频",
+    "inputs": [
+      "video",
+      "preset",
+      "quality"
+    ]
+  },
+  "resources": [
+    "cpu"
+  ],
+  "batch": {
+    "title": "批量转换视频",
+    "input": "video",
+    "accept": [
+      "mp4",
+      "mov",
+      "mkv",
+      "m4v",
+      "webm",
+      "avi",
+      "flv",
+      "wmv",
+      "mpg",
+      "mpeg",
+      "ts",
+      "m2ts",
+      "3gp",
+      "ogv"
+    ],
+    "skipExisting": true,
+    "outputExtension": "mp4"
+  },
+  "run": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "run",
+      "--config",
+      "{{configFile}}"
+    ]
+  },
+  "doctor": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "doctor",
+      "--config",
+      "{{configFile}}"
+    ]
+  },
+  "setup": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "setup",
+      "--config",
+      "{{configFile}}"
+    ]
+  }
+}

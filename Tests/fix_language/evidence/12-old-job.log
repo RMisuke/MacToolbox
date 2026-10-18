@@ -1,0 +1,119 @@
+任务目录：/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94
+启动：/usr/bin/env python3 /Volumes/APPLE 1TB/Code/MacToolbox/dist/MacToolboxDemo.app/Contents/Resources/Tools/media.subtitle.toolbox/scripts/tool.py run --config /Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94/config.json
+输入：/Volumes/APPLE 1TB/Video/ACCA FM 课程视频/Part B Financial management environment/12-Summary of chapter 2.mp4
+转写后端：local，校对模式：llm
+词表 Profile：ACCA FM · 示例词表
+$ /opt/homebrew/bin/ffprobe -v error -print_format json -show_format -show_streams "/Volumes/APPLE 1TB/Video/ACCA FM 课程视频/Part B Financial management environment/12-Summary of chapter 2.mp4"
+视频：12-Summary of chapter 2.mp4
+时长：151.6 秒（2.5 分钟）
+分辨率：960x540
+$ /opt/homebrew/bin/ffmpeg -y -v error -progress pipe:1 -nostats -i "/Volumes/APPLE 1TB/Video/ACCA FM 课程视频/Part B Financial management environment/12-Summary of chapter 2.mp4" -map 0:a:0 -vn -c:a pcm_s16le -ar 16000 -ac 1 "/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94/audio.wav"
+音轨：audio.wav（4.6 MB）
+词表 Profile：ACCA FM · 示例词表（热词 18 个）
+首次运行 whisper 会编译 Metal 着色器，可能需要 30–60 秒，请耐心等待。
+$ /opt/homebrew/bin/whisper-cli -m "/Volumes/APPLE 1TB/Whisper/models/ggml-large-v3-turbo.bin" -f "/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94/audio.wav" -of "/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94/raw" -osrt -otxt -oj -pp -mc 0 --prompt "ACCA，财务会计，管理会计，财管，折现率，摊销，股利政策，代理问题，优先偿付资本，资本结构，ROCE，ROE，PBIT，EPS，DPS，NED，NPV，IRR。ACCA 财务会计 管理会计 折现率 每股收益 公司治理"
+whisper_init_from_file_with_params_no_state: loading model from '/Volumes/APPLE 1TB/Whisper/models/ggml-large-v3-turbo.bin'
+whisper_init_with_params_no_state: use gpu    = 1
+whisper_init_with_params_no_state: flash attn = 1
+whisper_init_with_params_no_state: gpu_device = 0
+whisper_init_with_params_no_state: dtw        = 0
+whisper_init_with_params_no_state: devices    = 3
+whisper_init_with_params_no_state: backends   = 3
+whisper_model_load: loading model
+whisper_model_load: n_vocab       = 51866
+whisper_model_load: n_audio_ctx   = 1500
+whisper_model_load: n_audio_state = 1280
+whisper_model_load: n_audio_head  = 20
+whisper_model_load: n_audio_layer = 32
+whisper_model_load: n_text_ctx    = 448
+whisper_model_load: n_text_state  = 1280
+whisper_model_load: n_text_head   = 20
+whisper_model_load: n_text_layer  = 4
+whisper_model_load: n_mels        = 128
+whisper_model_load: ftype         = 1
+whisper_model_load: qntvr         = 0
+whisper_model_load: type          = 5 (large v3)
+whisper_model_load: adding 1609 extra tokens
+whisper_model_load: n_langs       = 100
+whisper_model_load:         MTL0 total size =  1623.92 MB
+whisper_model_load: model size    = 1623.92 MB
+whisper_backend_init_gpu: device 0: BLAS (type: 3)
+whisper_backend_init_gpu: device 1: MTL0 (type: 1)
+whisper_backend_init_gpu: found GPU device 1: MTL0 (type: 1, cnt: 0)
+whisper_backend_init_gpu: using MTL0 backend
+whisper_backend_init: using BLAS backend
+whisper_init_state: kv self size  =   10.49 MB
+whisper_init_state: kv cross size =   31.46 MB
+whisper_init_state: kv pad  size  =    7.86 MB
+whisper_init_state: compute buffer (conv)   =   37.69 MB
+whisper_init_state: compute buffer (encode) =   67.49 MB
+whisper_init_state: compute buffer (cross)  =   63.03 MB
+whisper_init_state: compute buffer (decode) =   97.75 MB
+read_audio_data: reading audio data from '/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94/audio.wav' ...
+read_audio_data: trying to decode with miniaudio
+system_info: n_threads = 4 / 8 | WHISPER : VITISAI = 0 | COREML = 0 | OPENVINO = 0 | MTL : EMBED_LIBRARY = 1 | CPU : NEON = 1 | ARM_FMA = 1 | DOTPROD = 1 | ACCELERATE = 1 | OPENMP = 1 | REPACK = 1 | 
+main: processing '/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94/audio.wav' (2424832 samples, 151.6 sec), 4 threads, 1 processors, 5 beams + best of 5, lang = en, task = transcribe, timestamps = 1 ...
+output_txt: saving output to '/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94/raw.txt'
+output_srt: saving output to '/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94/raw.srt'
+output_json: saving output to '/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94/raw.json'
+whisper_print_timings:     load time =  3012.77 ms
+whisper_print_timings:     fallbacks =   2 p /   0 h
+whisper_print_timings:      mel time =   138.46 ms
+whisper_print_timings:   sample time =  3428.59 ms /  5074 runs (     0.68 ms per run)
+whisper_print_timings:   encode time = 14143.23 ms /     6 runs (  2357.20 ms per run)
+whisper_print_timings:   decode time =  1041.22 ms /   106 runs (     9.82 ms per run)
+whisper_print_timings:   batchd time = 12605.03 ms /  4952 runs (     2.55 ms per run)
+whisper_print_timings:   prompt time =     0.00 ms /     1 runs (     0.00 ms per run)
+whisper_print_timings:    total time = 34546.11 ms
+转写完成：45 段
+词表规则：14 条（命中 0 处，0 token）
+LLM 提示词预设：general
+LLM 片段 1/1：新增 3 条（已有规则优先）
+LLM 校对完成：共 17 条规则（含词表规则）
+替换留痕：3 类，共 3 处
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 "/Volumes/APPLE 1TB/Code/MacToolbox/dist/MacToolboxDemo.app/Contents/Resources/Tools/media.subtitle.toolbox/scripts/make_srt.py" --src "/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94/raw.json" --out "/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94/final.srt" --max-char 36 --line-char 18 --max-dur 7.0 --min-dur 1.0 --merge-gap 0.35 --fix "/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94/fixes.json" --strip-punct --drop-fillers
+术语修正: 总学们好→1, best-to-be-win laws→1, 现日生活→1
+语气词清理: 剩余 27 条, 整条删除 0 条
+输入段 45 → 丢弃 0 → 合并/切分后 34 条
+时长: 均值 4.46s 最短 0.74s 最长 6.83s
+字数: 均值 33.1
+字幕工程完成：34 条
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 "/Volumes/APPLE 1TB/Code/MacToolbox/dist/MacToolboxDemo.app/Contents/Resources/Tools/media.subtitle.toolbox/scripts/check_srt.py" "/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94/final.srt" 151.552
+条数 34
+时长 均值 4.46s  最短 0.74s  最长 6.83s
+行宽超 18.6: 2
+超过 2 行: 0
+时长 <0.8s: 1  >9.0s: 0
+时间重叠: 0  乱序: 0
+末条结束 151.56s / 视频总长 151.55s
+字幕覆盖 100.0% 的时间轴
+-- 行宽超限 --
+  #2 [0.75-6.78] w=19.0 | 那我们接下来的话来去对我们的第二章关于我们的economic environment这个章
+  #24 [99.94-105.00] w=19.0 | And for some of the bad things we canuse our 
+-- 时长过短 --
+  #1 [0.00-0.74] w=4.0 | 同学们好
+质检未通过（硬性门禁），详情见 qc.txt
+任务目录：/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94
+断点续跑：复用已存在的中间产物
+启动：/usr/bin/env python3 /Volumes/APPLE 1TB/Code/MacToolbox/dist/MacToolboxDemo.app/Contents/Resources/Tools/media.subtitle.toolbox/scripts/tool.py run --config /Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94/config.json
+输入：/Volumes/APPLE 1TB/Video/ACCA FM 课程视频/Part B Financial management environment/12-Summary of chapter 2.mp4
+转写后端：local，校对模式：llm
+词表 Profile：ACCA FM · 示例词表
+断点续跑：复用 probe.json
+断点续跑：复用 audio.wav
+断点续跑：复用已有转写（45 段）
+词表规则：14 条（命中 0 处，0 token）
+断点续跑：复用 fixes.json
+替换留痕：6 类，共 7 处
+断点续跑：复用 final.srt
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 "/Volumes/APPLE 1TB/Code/MacToolbox/dist/MacToolboxDemo.app/Contents/Resources/Tools/media.subtitle.toolbox/scripts/check_srt.py" "/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-172147-media.subtitle-AC1F94/final.srt" 151.552 --line-char 18.0 --min-dur 1.0 --max-dur 7.0 --max-lines 2
+条数 35
+时长 均值 4.33s  最短 1.00s  最长 6.72s
+行宽超 18.6: 0
+超过 2 行: 0
+时长 <0.80s: 0  >9.10s: 0
+时间重叠: 0  乱序: 0
+末条结束 151.56s / 视频总长 151.55s
+字幕覆盖 100.0% 的时间轴
+质检通过（硬性门禁）
+已交付：/Volumes/APPLE 1TB/Video/ACCA FM 课程视频/Part B Financial management environment/12-Summary of chapter 2.srt

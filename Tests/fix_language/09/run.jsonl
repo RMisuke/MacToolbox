@@ -1,0 +1,146 @@
+{"type": "log", "level": "info", "message": "输入：/Volumes/APPLE 1TB/Video/ACCA FM 课程视频/Part B Financial management environment/09-Macroeconomic targets.mp4"}
+{"type": "log", "level": "info", "message": "转写后端：local，校对模式：off"}
+{"type": "log", "level": "info", "message": "词表 Profile：ACCA FM · 示例词表"}
+{"type": "step", "step": "probe", "title": "预检视频", "state": "running"}
+{"type": "progress", "fraction": 0.003, "step": "probe"}
+{"type": "log", "level": "info", "message": "$ /opt/homebrew/bin/ffprobe -v error -print_format json -show_format -show_streams \"/Volumes/APPLE 1TB/Video/ACCA FM 课程视频/Part B Financial management environment/09-Macroeconomic targets.mp4\""}
+{"type": "log", "level": "info", "message": "视频：09-Macroeconomic targets.mp4"}
+{"type": "log", "level": "info", "message": "时长：991.2 秒（16.5 分钟）"}
+{"type": "log", "level": "info", "message": "分辨率：960x540"}
+{"type": "artifact", "id": "probe", "kind": "json", "path": "/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/probe.json", "label": "视频信息"}
+{"type": "progress", "fraction": 0.03, "step": "probe"}
+{"type": "step", "step": "probe", "title": "预检视频", "state": "done"}
+{"type": "step", "step": "extract", "title": "提取音轨", "state": "running"}
+{"type": "log", "level": "info", "message": "$ /opt/homebrew/bin/ffmpeg -y -v error -progress pipe:1 -nostats -i \"/Volumes/APPLE 1TB/Video/ACCA FM 课程视频/Part B Financial management environment/09-Macroeconomic targets.mp4\" -map 0:a:0 -vn -c:a pcm_s16le -ar 16000 -ac 1 \"/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/audio.wav\""}
+{"type": "progress", "fraction": 0.05224046709953849, "step": "extract"}
+{"type": "progress", "fraction": 0.0727107438917525, "step": "extract"}
+{"type": "progress", "fraction": 0.09141828984957408, "step": "extract"}
+{"type": "progress", "fraction": 0.09999999858755543, "step": "extract"}
+{"type": "log", "level": "info", "message": "音轨：audio.wav（30.2 MB）"}
+{"type": "artifact", "id": "audio", "kind": "audio", "path": "/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/audio.wav", "label": "音轨"}
+{"type": "progress", "fraction": 0.1, "step": "extract"}
+{"type": "step", "step": "extract", "title": "提取音轨", "state": "done"}
+{"type": "step", "step": "transcribe", "title": "语音转写", "state": "running"}
+{"type": "log", "level": "info", "message": "词表 Profile：ACCA FM · 示例词表（热词 18 个）"}
+{"type": "log", "level": "info", "message": "转写语言：自动检测（whisper 采样开头 30 秒）"}
+{"type": "log", "level": "info", "message": "首次运行 whisper 会编译 Metal 着色器，可能需要 30–60 秒，请耐心等待。"}
+{"type": "log", "level": "info", "message": "$ /opt/homebrew/bin/whisper-cli -m \"/Volumes/APPLE 1TB/Whisper/models/ggml-large-v3-turbo.bin\" -f \"/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/audio.wav\" -of \"/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/raw\" -osrt -otxt -oj -pp -mc 0 -l auto --prompt \"ACCA，财务会计，管理会计，财管，折现率，摊销，股利政策，代理问题，优先偿付资本，资本结构，ROCE，ROE，PBIT，EPS，DPS，NED，NPV，IRR。ACCA 财务会计 管理会计 折现率 每股收益 公司治理\""}
+{"type": "log", "level": "stderr", "message": "whisper_init_from_file_with_params_no_state: loading model from '/Volumes/APPLE 1TB/Whisper/models/ggml-large-v3-turbo.bin'"}
+{"type": "log", "level": "stderr", "message": "whisper_init_with_params_no_state: use gpu    = 1"}
+{"type": "log", "level": "stderr", "message": "whisper_init_with_params_no_state: flash attn = 1"}
+{"type": "log", "level": "stderr", "message": "whisper_init_with_params_no_state: gpu_device = 0"}
+{"type": "log", "level": "stderr", "message": "whisper_init_with_params_no_state: dtw        = 0"}
+{"type": "log", "level": "stderr", "message": "whisper_init_with_params_no_state: devices    = 3"}
+{"type": "log", "level": "stderr", "message": "whisper_init_with_params_no_state: backends   = 3"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: loading model"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: n_vocab       = 51866"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: n_audio_ctx   = 1500"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: n_audio_state = 1280"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: n_audio_head  = 20"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: n_audio_layer = 32"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: n_text_ctx    = 448"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: n_text_state  = 1280"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: n_text_head   = 20"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: n_text_layer  = 4"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: n_mels        = 128"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: ftype         = 1"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: qntvr         = 0"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: type          = 5 (large v3)"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: adding 1609 extra tokens"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: n_langs       = 100"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load:         MTL0 total size =  1623.92 MB"}
+{"type": "log", "level": "stderr", "message": "whisper_model_load: model size    = 1623.92 MB"}
+{"type": "log", "level": "stderr", "message": "whisper_backend_init_gpu: device 0: BLAS (type: 3)"}
+{"type": "log", "level": "stderr", "message": "whisper_backend_init_gpu: device 1: MTL0 (type: 1)"}
+{"type": "log", "level": "stderr", "message": "whisper_backend_init_gpu: found GPU device 1: MTL0 (type: 1, cnt: 0)"}
+{"type": "log", "level": "stderr", "message": "whisper_backend_init_gpu: using MTL0 backend"}
+{"type": "log", "level": "stderr", "message": "whisper_backend_init: using BLAS backend"}
+{"type": "log", "level": "stderr", "message": "whisper_init_state: kv self size  =   10.49 MB"}
+{"type": "log", "level": "stderr", "message": "whisper_init_state: kv cross size =   31.46 MB"}
+{"type": "log", "level": "stderr", "message": "whisper_init_state: kv pad  size  =    7.86 MB"}
+{"type": "log", "level": "stderr", "message": "whisper_init_state: compute buffer (conv)   =   37.69 MB"}
+{"type": "log", "level": "stderr", "message": "whisper_init_state: compute buffer (encode) =   67.49 MB"}
+{"type": "log", "level": "stderr", "message": "whisper_init_state: compute buffer (cross)  =   63.03 MB"}
+{"type": "log", "level": "stderr", "message": "whisper_init_state: compute buffer (decode) =   97.75 MB"}
+{"type": "log", "level": "stderr", "message": "read_audio_data: reading audio data from '/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/audio.wav' ..."}
+{"type": "log", "level": "stderr", "message": "read_audio_data: trying to decode with miniaudio"}
+{"type": "log", "level": "stderr", "message": "system_info: n_threads = 4 / 8 | WHISPER : VITISAI = 0 | COREML = 0 | OPENVINO = 0 | MTL : EMBED_LIBRARY = 1 | CPU : NEON = 1 | ARM_FMA = 1 | DOTPROD = 1 | ACCELERATE = 1 | OPENMP = 1 | REPACK = 1 | "}
+{"type": "log", "level": "stderr", "message": "main: processing '/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/audio.wav' (15859029 samples, 991.2 sec), 4 threads, 1 processors, 5 beams + best of 5, lang = auto, task = transcribe, timestamps = 1 ..."}
+{"type": "progress", "fraction": 0.13, "step": "transcribe", "message": "whisper 5%"}
+{"type": "progress", "fraction": 0.166, "step": "transcribe", "message": "whisper 11%"}
+{"type": "progress", "fraction": 0.196, "step": "transcribe", "message": "whisper 16%"}
+{"type": "progress", "fraction": 0.232, "step": "transcribe", "message": "whisper 22%"}
+{"type": "progress", "fraction": 0.25, "step": "transcribe", "message": "whisper 25%"}
+{"type": "progress", "fraction": 0.28600000000000003, "step": "transcribe", "message": "whisper 31%"}
+{"type": "progress", "fraction": 0.322, "step": "transcribe", "message": "whisper 37%"}
+{"type": "progress", "fraction": 0.33999999999999997, "step": "transcribe", "message": "whisper 40%"}
+{"type": "progress", "fraction": 0.376, "step": "transcribe", "message": "whisper 46%"}
+{"type": "progress", "fraction": 0.41200000000000003, "step": "transcribe", "message": "whisper 52%"}
+{"type": "progress", "fraction": 0.44199999999999995, "step": "transcribe", "message": "whisper 57%"}
+{"type": "progress", "fraction": 0.45999999999999996, "step": "transcribe", "message": "whisper 60%"}
+{"type": "progress", "fraction": 0.496, "step": "transcribe", "message": "whisper 66%"}
+{"type": "progress", "fraction": 0.532, "step": "transcribe", "message": "whisper 72%"}
+{"type": "progress", "fraction": 0.5499999999999999, "step": "transcribe", "message": "whisper 75%"}
+{"type": "progress", "fraction": 0.586, "step": "transcribe", "message": "whisper 81%"}
+{"type": "progress", "fraction": 0.616, "step": "transcribe", "message": "whisper 86%"}
+{"type": "progress", "fraction": 0.652, "step": "transcribe", "message": "whisper 92%"}
+{"type": "progress", "fraction": 0.6699999999999999, "step": "transcribe", "message": "whisper 95%"}
+{"type": "progress", "fraction": 0.7, "step": "transcribe", "message": "whisper 100%"}
+{"type": "log", "level": "stderr", "message": "output_txt: saving output to '/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/raw.txt'"}
+{"type": "log", "level": "stderr", "message": "output_srt: saving output to '/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/raw.srt'"}
+{"type": "log", "level": "stderr", "message": "output_json: saving output to '/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/raw.json'"}
+{"type": "log", "level": "stderr", "message": "whisper_print_timings:     load time =  4304.74 ms"}
+{"type": "log", "level": "stderr", "message": "whisper_print_timings:     fallbacks =   0 p /   0 h"}
+{"type": "log", "level": "stderr", "message": "whisper_print_timings:      mel time =  2150.90 ms"}
+{"type": "log", "level": "stderr", "message": "whisper_print_timings:   sample time = 72716.48 ms / 25691 runs (     2.83 ms per run)"}
+{"type": "log", "level": "stderr", "message": "whisper_print_timings:   encode time = 87821.55 ms /    36 runs (  2439.49 ms per run)"}
+{"type": "log", "level": "stderr", "message": "whisper_print_timings:   decode time =   583.85 ms /    14 runs (    41.70 ms per run)"}
+{"type": "log", "level": "stderr", "message": "whisper_print_timings:   batchd time = 100851.33 ms / 25608 runs (     3.94 ms per run)"}
+{"type": "log", "level": "stderr", "message": "whisper_print_timings:   prompt time =     0.00 ms /     1 runs (     0.00 ms per run)"}
+{"type": "log", "level": "stderr", "message": "whisper_print_timings:    total time = 270276.19 ms"}
+{"type": "log", "level": "info", "message": "自动检测语言：zh（p=0.998092）"}
+{"type": "log", "level": "info", "message": "转写完成：432 段（语言 auto）"}
+{"type": "artifact", "id": "raw-json", "kind": "json", "path": "/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/raw.json", "label": "原始转写 JSON"}
+{"type": "artifact", "id": "raw-txt", "kind": "text", "path": "/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/raw.txt", "label": "原始转写文本"}
+{"type": "progress", "fraction": 0.7, "step": "transcribe"}
+{"type": "step", "step": "transcribe", "title": "语音转写", "state": "done"}
+{"type": "step", "step": "review", "title": "校对", "state": "running"}
+{"type": "log", "level": "info", "message": "词表规则：14 条（命中 0 处，0 token）"}
+{"type": "artifact", "id": "fixes", "kind": "json", "path": "/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/fixes.json", "label": "术语修正表"}
+{"type": "log", "level": "info", "message": "跳过 LLM/人工校对；保留词表规则（0 token）"}
+{"type": "log", "level": "info", "message": "替换留痕：0 类，共 0 处"}
+{"type": "artifact", "id": "substitutions", "kind": "json", "path": "/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/substitutions.json", "label": "替换留痕"}
+{"type": "progress", "fraction": 0.7999999999999999, "step": "review"}
+{"type": "step", "step": "review", "title": "校对", "state": "done"}
+{"type": "step", "step": "build", "title": "字幕工程", "state": "running"}
+{"type": "log", "level": "info", "message": "$ /Library/Frameworks/Python.framework/Versions/3.14/bin/python3 \"/Volumes/APPLE 1TB/Code/MacToolbox/Tools/media.subtitle.toolbox/scripts/make_srt.py\" --src \"/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/raw.json\" --out \"/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/final.srt\" --max-char 36.0 --line-char 18.0 --max-dur 7.0 --min-dur 1.0 --merge-gap 0.35 --fix \"/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/fixes.json\" --strip-punct --drop-fillers"}
+{"type": "log", "level": "info", "message": "语气词清理: 剩余 180 条, 整条删除 0 条"}
+{"type": "log", "level": "info", "message": "行宽自检: 拆分 1 条超限条"}
+{"type": "log", "level": "info", "message": "输入段 432 → 丢弃 0 → 合并/切分后 181 条"}
+{"type": "log", "level": "info", "message": "时长: 均值 5.47s 最短 2.89s 最长 7.00s"}
+{"type": "log", "level": "info", "message": "字数: 均值 25.9"}
+{"type": "log", "level": "info", "message": "行宽: 超 18.6 的 0 条；时长下限 1s 未达标 0 条"}
+{"type": "log", "level": "info", "message": "字幕工程完成：181 条"}
+{"type": "artifact", "id": "final-srt", "kind": "subtitle", "path": "/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/final.srt", "label": "成品字幕（SRT）"}
+{"type": "progress", "fraction": 0.8999999999999999, "step": "build"}
+{"type": "step", "step": "build", "title": "字幕工程", "state": "done"}
+{"type": "step", "step": "qc", "title": "质量检查", "state": "running"}
+{"type": "log", "level": "info", "message": "$ /Library/Frameworks/Python.framework/Versions/3.14/bin/python3 \"/Volumes/APPLE 1TB/Code/MacToolbox/Tools/media.subtitle.toolbox/scripts/check_srt.py\" \"/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/final.srt\" 991.189 --line-char 18.0 --min-dur 1.0 --max-dur 7.0 --max-lines 2"}
+{"type": "log", "level": "info", "message": "条数 181"}
+{"type": "log", "level": "info", "message": "时长 均值 5.47s  最短 2.89s  最长 7.00s"}
+{"type": "log", "level": "info", "message": "行宽超 18.6: 0"}
+{"type": "log", "level": "info", "message": "超过 2 行: 0"}
+{"type": "log", "level": "info", "message": "时长 <0.80s: 0  >9.10s: 0"}
+{"type": "log", "level": "info", "message": "时间重叠: 0  乱序: 0"}
+{"type": "log", "level": "info", "message": "末条结束 990.60s / 视频总长 991.19s"}
+{"type": "log", "level": "info", "message": "字幕覆盖 99.9% 的时间轴"}
+{"type": "artifact", "id": "qc", "kind": "report", "path": "/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/qc.txt", "label": "质检报告"}
+{"type": "log", "level": "info", "message": "质检通过（硬性门禁）"}
+{"type": "progress", "fraction": 0.95, "step": "qc"}
+{"type": "step", "step": "qc", "title": "质量检查", "state": "done"}
+{"type": "step", "step": "deliver", "title": "交付", "state": "running"}
+{"type": "log", "level": "info", "message": "已交付：/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/out/09-Macroeconomic targets.srt"}
+{"type": "artifact", "id": "delivered", "kind": "subtitle", "path": "/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/out/09-Macroeconomic targets.srt", "label": "成品字幕"}
+{"type": "progress", "fraction": 1.0, "step": "deliver"}
+{"type": "step", "step": "deliver", "title": "交付", "state": "done"}
+{"type": "result", "ok": true, "summary": "字幕已生成：09-Macroeconomic targets.srt", "artifacts": [{"id": "delivered", "kind": "subtitle", "path": "/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/out/09-Macroeconomic targets.srt", "label": "成品字幕"}, {"id": "final-srt", "kind": "subtitle", "path": "/Volumes/APPLE 1TB/Code/MacToolbox/Tests/fix_language/09/job/final.srt", "label": "工作副本"}]}

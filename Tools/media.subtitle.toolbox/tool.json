@@ -1,0 +1,613 @@
+{
+  "schemaVersion": 1,
+  "id": "media.subtitle",
+  "name": "视频字幕生成",
+  "version": "0.2.0",
+  "category": "媒体",
+  "icon": "captions.bubble",
+  "summary": "本地 whisper.cpp 或云端转写，可选人工/LLM 校对，输出 SRT / VTT。",
+  "agent": {
+    "capability": "media.subtitle.generate",
+    "description": "从视频生成 SRT/VTT：本地 whisper.cpp 或 OpenAI 兼容云端转写，可选词表规则、人工检查点或 LLM 校对，并做质检门禁。",
+    "stability": "stable",
+    "readOnly": false,
+    "idempotent": true,
+    "timeoutSec": 7200,
+    "checkpoint": "manual",
+    "tags": [
+      "video",
+      "subtitle",
+      "asr",
+      "whisper",
+      "llm",
+      "batch"
+    ],
+    "outputs": [
+      "subtitle",
+      "report"
+    ],
+    "examples": [
+      {
+        "title": "本地生成中文字幕",
+        "inputs": {
+          "video": "/tmp/course.mp4",
+          "backend": "local",
+          "reviewMode": "off",
+          "language": "zh"
+        }
+      },
+      {
+        "title": "人工检查点",
+        "inputs": {
+          "video": "/tmp/course.mp4",
+          "reviewMode": "manual",
+          "format": "srt"
+        }
+      }
+    ]
+  },
+  "requirements": [
+    {
+      "kind": "cli",
+      "name": "ffmpeg",
+      "installHint": "brew install ffmpeg"
+    },
+    {
+      "kind": "cli",
+      "name": "ffprobe",
+      "installHint": "brew install ffmpeg"
+    },
+    {
+      "kind": "cli",
+      "name": "whisper-cli",
+      "installHint": "brew install whisper.cpp",
+      "optional": true
+    }
+  ],
+  "inputs": [
+    {
+      "key": "video",
+      "type": "file",
+      "label": "视频文件",
+      "required": true,
+      "accept": [
+        "mp4",
+        "mov",
+        "mkv",
+        "m4v"
+      ],
+      "group": "基础",
+      "help": "支持 mp4 / mov / mkv。文件只读，不会修改原视频。"
+    },
+    {
+      "key": "preset",
+      "type": "preset",
+      "label": "参数预设",
+      "default": "course",
+      "group": "基础",
+      "options": [
+        {
+          "value": "course",
+          "label": "课程录像（推荐）"
+        },
+        {
+          "value": "interview",
+          "label": "访谈对话"
+        },
+        {
+          "value": "general",
+          "label": "通用"
+        },
+        {
+          "value": "custom",
+          "label": "自定义"
+        }
+      ],
+      "help": "预设只是一组参数快照；应用后仍可逐项修改，修改后自动变成「自定义」。"
+    },
+    {
+      "key": "outputDir",
+      "type": "directory",
+      "label": "输出目录",
+      "default": "",
+      "group": "基础",
+      "placeholder": "留空 = 视频同目录",
+      "help": "默认放在视频旁边，播放器会自动加载同名字幕。"
+    },
+    {
+      "key": "backend",
+      "type": "select",
+      "label": "转写后端",
+      "default": "local",
+      "group": "转写",
+      "options": [
+        {
+          "value": "local",
+          "label": "本地 whisper.cpp"
+        },
+        {
+          "value": "cloud",
+          "label": "云端 OpenAI 兼容接口"
+        }
+      ],
+      "help": "本地 whisper.cpp 不联网；云端走你填写的 OpenAI 兼容 /audio/transcriptions。"
+    },
+    {
+      "key": "modelPath",
+      "type": "text",
+      "label": "本地模型路径",
+      "default": "/Volumes/APPLE 1TB/Whisper/models/ggml-large-v3-turbo.bin",
+      "group": "转写",
+      "visibleWhen": {
+        "field": "backend",
+        "equals": "local"
+      },
+      "help": "ggml 格式模型路径；缺失时可在「环境修复」里下载。"
+    },
+    {
+      "key": "whisperCLI",
+      "type": "text",
+      "label": "whisper-cli 路径",
+      "default": "",
+      "group": "转写",
+      "advanced": true,
+      "visibleWhen": {
+        "field": "backend",
+        "equals": "local"
+      },
+      "placeholder": "留空自动查找 /opt/homebrew/bin/whisper-cli",
+      "help": "留空自动查找 /opt/homebrew/bin/whisper-cli；一般不需要改。"
+    },
+    {
+      "key": "language",
+      "type": "select",
+      "label": "语言",
+      "default": "zh",
+      "group": "转写",
+      "options": [
+        {
+          "value": "zh",
+          "label": "中文（推荐）"
+        },
+        {
+          "value": "en",
+          "label": "英文"
+        },
+        {
+          "value": "auto",
+          "label": "自动检测"
+        }
+      ],
+      "help": "课程 / 访谈建议固定选中文。自动检测只采样开头 30 秒，遇到英文开场或术语可能误判；若判成英文但正文大量中文，工具会自动改用中文重跑。"
+    },
+    {
+      "key": "prompt",
+      "type": "textarea",
+      "label": "背景提示 / 上下文",
+      "group": "转写",
+      "default": "ACCA 财务会计 管理会计 折现率 每股收益 公司治理",
+      "help": "转写前的背景提示，可放课程名/讲师/章节；会和热词合并后传给 whisper。"
+    },
+    {
+      "key": "hotwords",
+      "type": "textarea",
+      "label": "本次热词 / 术语",
+      "group": "词表",
+      "default": "",
+      "placeholder": "每行一个，例如：财会、折现率、ACCA、NED",
+      "help": "可选。会与词表 Profile 的热词合并，截断到 whisper prompt 上限；英文缩写建议一起写。"
+    },
+    {
+      "key": "termProfile",
+      "type": "lexicon",
+      "label": "词表 Profile",
+      "group": "词表",
+      "default": "auto",
+      "help": "自动按文件名/目录/讲师名匹配；也可手动选择或不用。规则会在 LLM 之前先执行。"
+    },
+    {
+      "key": "cloudBaseURL",
+      "type": "text",
+      "label": "云端 Base URL",
+      "default": "https://api.openai.com/v1",
+      "group": "转写",
+      "visibleWhen": {
+        "field": "backend",
+        "equals": "cloud"
+      },
+      "help": "OpenAI 兼容地址，填到 /v1 即可；本地网关/自建服务也可以。"
+    },
+    {
+      "key": "cloudModel",
+      "type": "model",
+      "label": "云端转写模型",
+      "default": "whisper-1",
+      "group": "转写",
+      "visibleWhen": {
+        "field": "backend",
+        "equals": "cloud"
+      },
+      "modelSource": {
+        "baseURLField": "cloudBaseURL",
+        "apiKeyField": "cloudAPIKey"
+      },
+      "help": "点「获取模型」从供应商拉取列表，或手动输入 ASR 模型 ID。"
+    },
+    {
+      "key": "cloudAPIKey",
+      "type": "secret",
+      "label": "云端 API Key",
+      "default": "",
+      "group": "转写",
+      "visibleWhen": {
+        "field": "backend",
+        "equals": "cloud"
+      },
+      "help": "存 macOS 钥匙串；不写入 preferences / 任务 config / records。留空时使用已保存的 Key。"
+    },
+    {
+      "key": "reviewMode",
+      "type": "select",
+      "label": "校对方式",
+      "default": "manual",
+      "group": "校对",
+      "options": [
+        {
+          "value": "off",
+          "label": "不校对（最快）"
+        },
+        {
+          "value": "manual",
+          "label": "人工校对（检查点）"
+        },
+        {
+          "value": "llm",
+          "label": "LLM 自动校对"
+        }
+      ],
+      "help": "不校对最快；人工校对会在转写后暂停；LLM 校对会调用你配置的端点。"
+    },
+    {
+      "key": "llmBaseURL",
+      "type": "text",
+      "label": "LLM Base URL",
+      "default": "http://127.0.0.1:11434/v1",
+      "group": "校对",
+      "visibleWhen": {
+        "field": "reviewMode",
+        "equals": "llm"
+      },
+      "help": "OpenAI 兼容 Chat Completions 地址；Ollama 常用 http://127.0.0.1:11434/v1。"
+    },
+    {
+      "key": "llmModel",
+      "type": "model",
+      "label": "LLM 模型",
+      "default": "qwen2.5:7b",
+      "group": "校对",
+      "visibleWhen": {
+        "field": "reviewMode",
+        "equals": "llm"
+      },
+      "modelSource": {
+        "baseURLField": "llmBaseURL",
+        "apiKeyField": "llmAPIKey"
+      },
+      "help": "点「获取模型」从供应商拉取列表，或手动输入模型 ID。"
+    },
+    {
+      "key": "llmAPIKey",
+      "type": "secret",
+      "label": "LLM API Key",
+      "default": "",
+      "group": "校对",
+      "visibleWhen": {
+        "field": "reviewMode",
+        "equals": "llm"
+      },
+      "help": "存 macOS 钥匙串；不写入 preferences / 任务 config / records。本地端点通常留空。"
+    },
+    {
+      "key": "llmFallback",
+      "type": "toggle",
+      "label": "LLM 失败时继续",
+      "default": true,
+      "group": "校对",
+      "visibleWhen": {
+        "field": "reviewMode",
+        "equals": "llm"
+      },
+      "help": "开启后 LLM 请求失败会跳过并继续；关闭则终止任务。"
+    },
+    {
+      "key": "llmPromptPreset",
+      "type": "select",
+      "label": "LLM 提示词预设",
+      "group": "校对",
+      "default": "general",
+      "options": [
+        {
+          "value": "general",
+          "label": "通用字幕清洗"
+        },
+        {
+          "value": "acca",
+          "label": "ACCA / 财会课程"
+        },
+        {
+          "value": "interview",
+          "label": "访谈口语"
+        },
+        {
+          "value": "terminology",
+          "label": "只改术语与同音"
+        },
+        {
+          "value": "custom",
+          "label": "自定义"
+        }
+      ],
+      "help": "选择预设会自动填入下面的系统提示词；之后可自由修改。"
+    },
+    {
+      "key": "llmPrompt",
+      "type": "textarea",
+      "label": "LLM 系统提示词",
+      "group": "校对",
+      "default": "",
+      "help": "要求模型只输出 JSON 映射；修改后预设会切到「自定义」。不要在这里要求整篇改写。"
+    },
+    {
+      "key": "llmScope",
+      "type": "select",
+      "label": "LLM 校对范围",
+      "group": "校对",
+      "default": "full",
+      "visibleWhen": {
+        "field": "reviewMode",
+        "equals": "llm"
+      },
+      "options": [
+        {
+          "value": "full",
+          "label": "全文（最准，默认）"
+        },
+        {
+          "value": "hotwords",
+          "label": "仅热词/缩写片段（省 token）"
+        }
+      ],
+      "help": "全文最稳；仅片段会少发很多文本，但可能漏改不在热词里的错误。"
+    },
+    {
+      "key": "format",
+      "type": "select",
+      "label": "字幕格式",
+      "default": "srt",
+      "group": "字幕",
+      "options": [
+        {
+          "value": "srt",
+          "label": "SRT 外挂字幕"
+        },
+        {
+          "value": "vtt",
+          "label": "WebVTT"
+        }
+      ],
+      "help": "SRT 兼容绝大多数播放器；VTT 适合网页/浏览器。"
+    },
+    {
+      "key": "maxChar",
+      "type": "number",
+      "label": "单条最大宽度",
+      "default": 36,
+      "min": 10,
+      "max": 80,
+      "group": "字幕",
+      "help": "单条字幕最大显示宽度（全角字符）。36 来自课程录像实测。"
+    },
+    {
+      "key": "lineChar",
+      "type": "number",
+      "label": "单行最大宽度",
+      "default": 18,
+      "min": 6,
+      "max": 40,
+      "group": "字幕",
+      "help": "单行最大显示宽度。18 是默认；降到 16 反而会产生更多断词。"
+    },
+    {
+      "key": "maxDur",
+      "type": "number",
+      "label": "单条最长秒数",
+      "default": 7,
+      "min": 2,
+      "max": 20,
+      "group": "字幕",
+      "help": "单条字幕最长秒数；超过后会优先按标点/词边界切分。"
+    },
+    {
+      "key": "minDur",
+      "type": "number",
+      "label": "单条最短秒数",
+      "default": 1.0,
+      "min": 0.3,
+      "max": 5,
+      "group": "字幕",
+      "help": "单条字幕最短秒数；不足会尝试并入前条或向后延长。"
+    },
+    {
+      "key": "mergeGap",
+      "type": "number",
+      "label": "碎片合并间隔（秒）",
+      "default": 0.35,
+      "min": 0,
+      "max": 2,
+      "group": "字幕",
+      "help": "相邻碎片小于该间隔时合并，避免一闪而过的短条。"
+    },
+    {
+      "key": "stripPunct",
+      "type": "toggle",
+      "label": "去掉标点",
+      "default": true,
+      "group": "字幕",
+      "help": "去掉字幕标点，保留小数点/千分位；断句仍用带标点原文计算。"
+    },
+    {
+      "key": "dropFillers",
+      "type": "toggle",
+      "label": "删除语气词 / 口误",
+      "default": true,
+      "group": "字幕",
+      "help": "删除「对不对/对吧/好吗」和高置信叠词口误；可能误删口头禅。"
+    },
+    {
+      "key": "allowQCFail",
+      "type": "toggle",
+      "label": "质检失败仍交付",
+      "default": false,
+      "group": "字幕",
+      "help": "关闭时，重叠/乱序/超短条等硬性失败会终止任务。"
+    },
+    {
+      "key": "overwrite",
+      "type": "toggle",
+      "label": "覆盖同名成品",
+      "default": true,
+      "group": "字幕",
+      "help": "关闭时，目标字幕已存在会让该任务失败。"
+    },
+    {
+      "key": "jiebaLib",
+      "type": "text",
+      "label": "jieba 库路径",
+      "default": "/Volumes/APPLE 1TB/Whisper/lib",
+      "group": "环境",
+      "advanced": true,
+      "help": "jieba 缺失会静默退化为按字断行；外置盘换路径时改这里。"
+    }
+  ],
+  "presets": [
+    {
+      "id": "course",
+      "name": "课程录像",
+      "values": {
+        "maxChar": 36,
+        "lineChar": 18,
+        "maxDur": 7,
+        "minDur": 1.0,
+        "mergeGap": 0.35,
+        "stripPunct": true,
+        "dropFillers": true
+      }
+    },
+    {
+      "id": "interview",
+      "name": "访谈对话",
+      "values": {
+        "maxChar": 32,
+        "lineChar": 16,
+        "maxDur": 6,
+        "minDur": 0.9,
+        "mergeGap": 0.35,
+        "stripPunct": false,
+        "dropFillers": false
+      }
+    },
+    {
+      "id": "general",
+      "name": "通用",
+      "values": {
+        "maxChar": 36,
+        "lineChar": 18,
+        "maxDur": 7,
+        "minDur": 1.0,
+        "mergeGap": 0.35,
+        "stripPunct": false,
+        "dropFillers": false
+      }
+    }
+  ],
+  "quick": {
+    "title": "快速生成字幕",
+    "inputs": [
+      "video",
+      "preset",
+      "reviewMode"
+    ]
+  },
+  "resources": [
+    "gpu"
+  ],
+  "batch": {
+    "title": "批量生成字幕",
+    "input": "video",
+    "accept": [
+      "mp4",
+      "mov",
+      "mkv",
+      "m4v"
+    ],
+    "skipExisting": true
+  },
+  "run": {
+    "mode": "protocol",
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "run",
+      "--config",
+      "{{configFile}}"
+    ]
+  },
+  "doctor": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "doctor",
+      "--config",
+      "{{configFile}}"
+    ]
+  },
+  "setup": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "setup",
+      "--config",
+      "{{configFile}}"
+    ]
+  },
+  "promptPresets": [
+    {
+      "id": "general",
+      "name": "通用字幕清洗",
+      "prompt": "你是严谨的中文字幕校对助手。只找出四类问题：系统性同音错、专业术语/缩写错误、ASR 幻觉样板话、明显口误或重复。输出一个 JSON 对象：键是原文中的错误片段，值是修正后的写法。键要尽量长、带上下文以精确锚定；不要输出解释、不要 markdown。修正值里不要带标点。没有把握的不要改。"
+    },
+    {
+      "id": "acca",
+      "name": "ACCA / 财会课程",
+      "prompt": "你是 ACCA/财会课程的字幕校对助手。优先修正：会计与财管术语、英文缩写、公式符号、同音错（例如 财块→财会、折线率→折现率、美股→每股）。键必须是原文中尽量长的上下文片段，避免用短词误伤正确内容；修正值不带标点。只输出 JSON 对象（错误片段→修正），不要解释、不要 markdown、不要整篇改写。"
+    },
+    {
+      "id": "interview",
+      "name": "访谈口语",
+      "prompt": "你是访谈/口语字幕校对助手。只修正明显的同音错、专有名词、ASR 幻觉和重复口误；保留说话人的口语表达，不要润色、不要改写句式、不要删正常语气。输出 JSON 对象（错误片段→修正），键尽量带上下文；不要输出解释或 markdown。没有把握的不要改。"
+    },
+    {
+      "id": "terminology",
+      "name": "只改术语与同音",
+      "prompt": "你是术语与同音词校对助手。只处理专业术语、英文缩写、人名机构名和系统性同音错；不要改语法、不要删语气词、不要润色句子。输出 JSON 对象（错误片段→修正），键尽量长、带上下文以锚定；修正值不带标点。不要解释、不要 markdown。"
+    },
+    {
+      "id": "custom",
+      "name": "自定义",
+      "prompt": ""
+    }
+  ]
+}

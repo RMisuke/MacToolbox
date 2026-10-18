@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "id": "__TOOL_ID__",
+  "name": "__TOOL_NAME__",
+  "version": "0.2.0",
+  "category": "__TOOL_CATEGORY__",
+  "icon": "wrench.and.screwdriver",
+  "summary": "__TOOL_SUMMARY__",
+  "agent": {
+    "capability": "__TOOL_ID__",
+    "description": "__TOOL_SUMMARY__；这是 Agent/CLI 标准骨架：声明 capability、checkpoint、timeoutSec 和 examples。",
+    "stability": "experimental",
+    "readOnly": false,
+    "idempotent": true,
+    "timeoutSec": 120,
+    "checkpoint": "never",
+    "tags": [
+      "template",
+      "text"
+    ],
+    "outputs": [
+      "text"
+    ],
+    "examples": [
+      {
+        "title": "重复两次并转大写",
+        "inputs": {
+          "text": "hello",
+          "repeat": 2,
+          "uppercase": true
+        }
+      }
+    ]
+  },
+  "requirements": [
+    {
+      "kind": "cli",
+      "name": "python3",
+      "installHint": "macOS 通常自带；或 brew install python"
+    }
+  ],
+  "inputs": [
+    {
+      "key": "text",
+      "type": "textarea",
+      "label": "输入文本",
+      "default": "Hello, MacToolbox!",
+      "required": true,
+      "group": "基础",
+      "help": "模板会把这段文本按「重复次数」写入结果文件。"
+    },
+    {
+      "key": "uppercase",
+      "type": "toggle",
+      "label": "转为大写",
+      "default": false,
+      "group": "基础",
+      "help": "打开后对结果调用 upper()；用来验证 toggle 字段。"
+    },
+    {
+      "key": "repeat",
+      "type": "number",
+      "label": "重复次数",
+      "default": 1,
+      "min": 1,
+      "max": 10,
+      "group": "基础",
+      "help": "1–10 次，用来验证 number 字段和范围。"
+    },
+    {
+      "key": "outputDir",
+      "type": "directory",
+      "label": "输出目录",
+      "default": "",
+      "group": "输出",
+      "help": "留空写到当前任务目录；选择目录则写到该目录下的 result.txt。"
+    }
+  ],
+  "quick": {
+    "title": "快速生成文本",
+    "inputs": [
+      "text",
+      "uppercase"
+    ]
+  },
+  "run": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "run",
+      "--config",
+      "{{configFile}}"
+    ]
+  },
+  "doctor": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "doctor",
+      "--config",
+      "{{configFile}}"
+    ]
+  },
+  "setup": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "setup",
+      "--config",
+      "{{configFile}}"
+    ]
+  }
+}

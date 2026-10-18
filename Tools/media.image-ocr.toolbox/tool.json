@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "id": "media.image-ocr",
+  "name": "图片 OCR",
+  "version": "0.2.0",
+  "category": "媒体",
+  "icon": "text.viewfinder",
+  "summary": "拖拽或粘贴图片，用 macOS 内置 OCR 识别文字；可编辑、复制、导出 TXT；同时提供 CLI/Agent 入口。",
+  "agent": {
+    "capability": "media.image.ocr",
+    "description": "用 macOS Vision 识别图片文字，支持中/繁/英/日/韩，输出 TXT 或 JSON（含置信度与归一化坐标）。批量用 mct batch。",
+    "stability": "stable",
+    "readOnly": true,
+    "idempotent": true,
+    "timeoutSec": 300,
+    "checkpoint": "never",
+    "tags": [
+      "image",
+      "ocr",
+      "vision",
+      "text",
+      "batch"
+    ],
+    "outputs": [
+      "text",
+      "json"
+    ],
+    "examples": [
+      {
+        "title": "识别中文截图",
+        "inputs": {
+          "image": "/tmp/screenshot.png",
+          "language": "zh-Hans",
+          "format": "txt"
+        }
+      },
+      {
+        "title": "输出 JSON",
+        "inputs": {
+          "image": "/tmp/receipt.jpg",
+          "language": "auto",
+          "format": "json"
+        }
+      }
+    ]
+  },
+  "nativeView": "imageOCR",
+  "requirements": [
+    {
+      "kind": "cli",
+      "name": "swiftc",
+      "installHint": "xcode-select --install（首次编译 OCR 助手需要）"
+    },
+    {
+      "kind": "cli",
+      "name": "sips",
+      "installHint": "macOS 自带；用于 HEIC/PDF 等原生解码"
+    }
+  ],
+  "inputs": [
+    {
+      "key": "image",
+      "type": "file",
+      "label": "图片文件",
+      "required": true,
+      "accept": [
+        "png",
+        "jpg",
+        "jpeg",
+        "heic",
+        "heif",
+        "tif",
+        "tiff",
+        "gif",
+        "webp",
+        "bmp",
+        "pdf"
+      ],
+      "group": "基础",
+      "help": "PNG/JPEG/HEIC/TIFF/GIF/WebP/BMP；PDF 只识别第一页；动图只取第一帧。"
+    },
+    {
+      "key": "language",
+      "type": "select",
+      "label": "识别语言",
+      "default": "auto",
+      "group": "基础",
+      "options": [
+        {
+          "value": "auto",
+          "label": "自动"
+        },
+        {
+          "value": "zh-Hans",
+          "label": "简体中文"
+        },
+        {
+          "value": "zh-Hant",
+          "label": "繁体中文"
+        },
+        {
+          "value": "en",
+          "label": "英语"
+        },
+        {
+          "value": "ja",
+          "label": "日语"
+        },
+        {
+          "value": "ko",
+          "label": "韩语"
+        }
+      ],
+      "help": "自动模式使用系统默认语言；中英混排建议显式选简体中文。"
+    },
+    {
+      "key": "format",
+      "type": "select",
+      "label": "输出格式",
+      "default": "txt",
+      "group": "输出",
+      "options": [
+        {
+          "value": "txt",
+          "label": "TXT（纯文本）"
+        },
+        {
+          "value": "json",
+          "label": "JSON（含置信度/坐标）"
+        },
+        {
+          "value": "both",
+          "label": "TXT + JSON"
+        }
+      ],
+      "help": "JSON 含每行文本、置信度和归一化包围盒，便于后续结构化处理。"
+    },
+    {
+      "key": "outputDir",
+      "type": "directory",
+      "label": "输出目录",
+      "default": "",
+      "group": "输出",
+      "help": "留空写入任务目录；选择目录则同时复制成品到该目录。"
+    }
+  ],
+  "quick": {
+    "title": "快速 OCR",
+    "inputs": [
+      "image",
+      "language"
+    ]
+  },
+  "resources": [
+    "cpu"
+  ],
+  "batch": {
+    "title": "批量 OCR",
+    "input": "image",
+    "accept": [
+      "png",
+      "jpg",
+      "jpeg",
+      "heic",
+      "heif",
+      "tif",
+      "tiff",
+      "gif",
+      "webp",
+      "bmp",
+      "pdf"
+    ],
+    "skipExisting": true,
+    "outputExtension": "txt"
+  },
+  "run": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "run",
+      "--config",
+      "{{configFile}}"
+    ]
+  },
+  "doctor": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "doctor",
+      "--config",
+      "{{configFile}}"
+    ]
+  },
+  "setup": {
+    "command": "/usr/bin/env",
+    "args": [
+      "python3",
+      "{{toolDir}}/scripts/tool.py",
+      "setup",
+      "--config",
+      "{{configFile}}"
+    ]
+  }
+}

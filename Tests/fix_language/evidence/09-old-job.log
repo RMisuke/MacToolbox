@@ -1,0 +1,96 @@
+任务目录：/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-200115-media.subtitle-036109
+缓存指纹：469bac36b3
+启动：/usr/bin/env python3 /Volumes/APPLE 1TB/Code/MacToolbox/dist/MacToolboxDemo.app/Contents/Resources/Tools/media.subtitle.toolbox/scripts/tool.py run --config /Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-200115-media.subtitle-036109/config.json
+输入：/Volumes/APPLE 1TB/Video/ACCA FM 课程视频/Part B Financial management environment/09-Macroeconomic targets.mp4
+转写后端：local，校对模式：llm
+词表 Profile：ACCA FM · 示例词表
+$ /opt/homebrew/bin/ffprobe -v error -print_format json -show_format -show_streams "/Volumes/APPLE 1TB/Video/ACCA FM 课程视频/Part B Financial management environment/09-Macroeconomic targets.mp4"
+视频：09-Macroeconomic targets.mp4
+时长：991.2 秒（16.5 分钟）
+分辨率：960x540
+$ /opt/homebrew/bin/ffmpeg -y -v error -progress pipe:1 -nostats -i "/Volumes/APPLE 1TB/Video/ACCA FM 课程视频/Part B Financial management environment/09-Macroeconomic targets.mp4" -map 0:a:0 -vn -c:a pcm_s16le -ar 16000 -ac 1 "/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-200115-media.subtitle-036109/audio.wav"
+音轨：audio.wav（30.2 MB）
+词表 Profile：ACCA FM · 示例词表（热词 18 个）
+首次运行 whisper 会编译 Metal 着色器，可能需要 30–60 秒，请耐心等待。
+$ /opt/homebrew/bin/whisper-cli -m "/Volumes/APPLE 1TB/Whisper/models/ggml-large-v3-turbo.bin" -f "/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-200115-media.subtitle-036109/audio.wav" -of "/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-200115-media.subtitle-036109/raw" -osrt -otxt -oj -pp -mc 0 --prompt "ACCA，财务会计，管理会计，财管，折现率，摊销，股利政策，代理问题，优先偿付资本，资本结构，ROCE，ROE，PBIT，EPS，DPS，NED，NPV，IRR。ACCA 财务会计 管理会计 折现率 每股收益 公司治理"
+whisper_init_from_file_with_params_no_state: loading model from '/Volumes/APPLE 1TB/Whisper/models/ggml-large-v3-turbo.bin'
+whisper_init_with_params_no_state: use gpu    = 1
+whisper_init_with_params_no_state: flash attn = 1
+whisper_init_with_params_no_state: gpu_device = 0
+whisper_init_with_params_no_state: dtw        = 0
+whisper_init_with_params_no_state: devices    = 3
+whisper_init_with_params_no_state: backends   = 3
+whisper_model_load: loading model
+whisper_model_load: n_vocab       = 51866
+whisper_model_load: n_audio_ctx   = 1500
+whisper_model_load: n_audio_state = 1280
+whisper_model_load: n_audio_head  = 20
+whisper_model_load: n_audio_layer = 32
+whisper_model_load: n_text_ctx    = 448
+whisper_model_load: n_text_state  = 1280
+whisper_model_load: n_text_head   = 20
+whisper_model_load: n_text_layer  = 4
+whisper_model_load: n_mels        = 128
+whisper_model_load: ftype         = 1
+whisper_model_load: qntvr         = 0
+whisper_model_load: type          = 5 (large v3)
+whisper_model_load: adding 1609 extra tokens
+whisper_model_load: n_langs       = 100
+whisper_model_load:         MTL0 total size =  1623.92 MB
+whisper_model_load: model size    = 1623.92 MB
+whisper_backend_init_gpu: device 0: BLAS (type: 3)
+whisper_backend_init_gpu: device 1: MTL0 (type: 1)
+whisper_backend_init_gpu: found GPU device 1: MTL0 (type: 1, cnt: 0)
+whisper_backend_init_gpu: using MTL0 backend
+whisper_backend_init: using BLAS backend
+whisper_init_state: kv self size  =   10.49 MB
+whisper_init_state: kv cross size =   31.46 MB
+whisper_init_state: kv pad  size  =    7.86 MB
+whisper_init_state: compute buffer (conv)   =   37.69 MB
+whisper_init_state: compute buffer (encode) =   67.49 MB
+whisper_init_state: compute buffer (cross)  =   63.03 MB
+whisper_init_state: compute buffer (decode) =   97.75 MB
+read_audio_data: reading audio data from '/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-200115-media.subtitle-036109/audio.wav' ...
+read_audio_data: trying to decode with miniaudio
+system_info: n_threads = 4 / 8 | WHISPER : VITISAI = 0 | COREML = 0 | OPENVINO = 0 | MTL : EMBED_LIBRARY = 1 | CPU : NEON = 1 | ARM_FMA = 1 | DOTPROD = 1 | ACCELERATE = 1 | OPENMP = 1 | REPACK = 1 | 
+main: processing '/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-200115-media.subtitle-036109/audio.wav' (15859029 samples, 991.2 sec), 4 threads, 1 processors, 5 beams + best of 5, lang = en, task = transcribe, timestamps = 1 ...
+output_txt: saving output to '/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-200115-media.subtitle-036109/raw.txt'
+output_srt: saving output to '/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-200115-media.subtitle-036109/raw.srt'
+output_json: saving output to '/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-200115-media.subtitle-036109/raw.json'
+whisper_print_timings:     load time =  3333.40 ms
+whisper_print_timings:     fallbacks =  14 p /  16 h
+whisper_print_timings:      mel time =  1096.49 ms
+whisper_print_timings:   sample time = 47528.54 ms / 37859 runs (     1.26 ms per run)
+whisper_print_timings:   encode time = 82428.05 ms /    37 runs (  2227.79 ms per run)
+whisper_print_timings:   decode time =  2436.16 ms /   161 runs (    15.13 ms per run)
+whisper_print_timings:   batchd time = 104948.30 ms / 37596 runs (     2.79 ms per run)
+whisper_print_timings:   prompt time =     0.00 ms /     1 runs (     0.00 ms per run)
+whisper_print_timings:    total time = 242661.06 ms
+转写完成：310 段
+词表规则：14 条（命中 0 处，0 token）
+LLM 提示词预设：general
+LLM 片段 1/1：新增 0 条（已有规则优先）
+LLM 校对完成：共 14 条规则（含词表规则）
+替换留痕：0 类，共 0 处
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 "/Volumes/APPLE 1TB/Code/MacToolbox/dist/MacToolboxDemo.app/Contents/Resources/Tools/media.subtitle.toolbox/scripts/make_srt.py" --src "/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-200115-media.subtitle-036109/raw.json" --out "/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-200115-media.subtitle-036109/final.srt" --max-char 36.0 --line-char 18.0 --max-dur 7.0 --min-dur 1.0 --merge-gap 0.35 --fix "/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-200115-media.subtitle-036109/fixes.json" --strip-punct --drop-fillers
+语气词清理: 剩余 161 条, 整条删除 0 条
+行宽自检: 拆分 2 条超限条
+输入段 310 → 丢弃 0 → 合并/切分后 194 条
+时长: 均值 5.10s 最短 1.00s 最长 9.64s
+字数: 均值 28.4
+行宽: 超 18.6 的 0 条；时长下限 1s 未达标 0 条
+字幕工程完成：194 条
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 "/Volumes/APPLE 1TB/Code/MacToolbox/dist/MacToolboxDemo.app/Contents/Resources/Tools/media.subtitle.toolbox/scripts/check_srt.py" "/Users/chensinuo/Library/Application Support/MacToolboxDemo/Jobs/20261018-200115-media.subtitle-036109/final.srt" 991.189 --line-char 18.0 --min-dur 1.0 --max-dur 7.0 --max-lines 2
+条数 194
+时长 均值 5.10s  最短 1.00s  最长 9.64s
+行宽超 18.6: 0
+超过 2 行: 0
+时长 <0.80s: 0  >9.10s: 1
+时间重叠: 0  乱序: 0
+末条结束 990.60s / 视频总长 991.19s
+字幕覆盖 99.9% 的时间轴
+-- 时长过长（建议项，不阻断） --
+  #184 [926.46-936.10] w=15.5 | 进出口平衡 没毛病 B选项说鼓励均等的收入分配 想要搞大同社会了
+PASS（存在建议项，未阻断）
+质检通过（硬性门禁）
+已交付：/Volumes/APPLE 1TB/Video/ACCA FM 课程视频/Part B Financial management environment/09-Macroeconomic targets.srt
